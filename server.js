@@ -6,8 +6,28 @@ const net = require('net');
 const { WebSocketServer } = require('ws');
 const QRCode = require('qrcode');
 
-// ฟังก์ชันหาพอร์ตว่างอัตโนมัติ เริ่มต้นที่ 3001 หรือพอร์ตที่ระบุ
+// โหลด Games Bundle เผื่อในกรณีที่โฟลเดอร์ games ไม่ได้ถูกอัปโหลดขึ้นคลาวด์
+let GAMES_BUNDLE = {};
+try {
+    GAMES_BUNDLE = require('./gamesBundle.js');
+    // กู้คืนไฟล์เกมลงดิสก์โดยอัตโนมัติหากไฟล์ยังไม่มี
+    for (const [relPath, fileContent] of Object.entries(GAMES_BUNDLE)) {
+        const targetPath = path.join(__dirname, relPath);
+        if (!fs.existsSync(targetPath)) {
+            const dir = path.dirname(targetPath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(targetPath, fileContent, 'utf8');
+        }
+    }
+} catch (e) {
+    console.log('Running without gamesBundle fallback');
+}
+
+// ฟังก์ชันหาพอร์ตว่างอัตโนมัติ (หรือใช้พอร์ตจาก Environment Variable PORT เช่น บน Render / Railway / Heroku)
 function getAvailablePort(startingPort = 3001) {
+    if (process.env.PORT) {
+        return Promise.resolve(parseInt(process.env.PORT, 10));
+    }
     return new Promise((resolve, reject) => {
         const testServer = net.createServer();
         testServer.unref();
@@ -54,11 +74,15 @@ const MIME_TYPES = {
 
 async function startServer() {
     const PORT = await getAvailablePort(3001);
-    const controllerURL = `http://${localIP}:${PORT}/controller.html`;
+    const isProduction = !!process.env.PORT;
+    const controllerURL = isProduction 
+        ? `/controller.html` 
+        : `http://${localIP}:${PORT}/controller.html`;
 
     // HTTP Server
     const server = http.createServer(async (req, res) => {
-        const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+        const hostHeader = req.headers.host || `localhost:${PORT}`;
+        const parsedUrl = new URL(req.url, `http://${hostHeader}`);
         const pathname = parsedUrl.pathname;
 
         // 1. API: ดึงข้อมูลการเชื่อมต่อ
@@ -67,7 +91,7 @@ async function startServer() {
             res.end(JSON.stringify({
                 ip: localIP,
                 port: PORT,
-                controllerUrl: controllerURL
+                controllerUrl: isProduction ? `http://${hostHeader}/controller.html` : controllerURL
             }));
             return;
         }
@@ -75,7 +99,8 @@ async function startServer() {
         // 2. API: ดึงภาพ QR Code แบบ DataURL สำหรับสแกนเข้า Controller
         if (pathname === '/api/qrcode') {
             try {
-                const qrDataUrl = await QRCode.toDataURL(controllerURL, {
+                const targetUrl = isProduction ? `https://${hostHeader}/controller.html` : controllerURL;
+                const qrDataUrl = await QRCode.toDataURL(targetUrl, {
                     width: 280,
                     margin: 2,
                     color: {
@@ -84,7 +109,7 @@ async function startServer() {
                     }
                 });
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ qr: qrDataUrl, url: controllerURL }));
+                res.end(JSON.stringify({ qr: qrDataUrl, url: targetUrl }));
             } catch (err) {
                 res.writeHead(500, { 'Content-Type': 'text/plain' });
                 res.end('Error generating QR code');
@@ -93,21 +118,29 @@ async function startServer() {
         }
 
         // 3. Static Files
-        let filePath = path.join(__dirname, pathname === '/' ? 'index.html' : pathname);
+        let relPath = (pathname === '/' ? 'index.html' : pathname).replace(/^\/+/, '');
+        let filePath = path.join(__dirname, relPath);
 
-        fs.stat(filePath, (err, stats) => {
-            if (err || !stats.isFile()) {
-                res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-                res.end('404 ไม่พบไฟล์');
-                return;
-            }
-
+        // ตรวจสอบไฟล์บนเครื่อง
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = path.extname(filePath).toLowerCase();
             const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
             res.writeHead(200, { 'Content-Type': contentType });
             fs.createReadStream(filePath).pipe(res);
-        });
+            return;
+        }
+
+        // Fallback: หากไฟล์ไม่มีบนเครื่อง ให้ดึงจาก GAMES_BUNDLE โดยตรง (แก้ปัญหา 404 บนคลาวด์ 100%)
+        if (GAMES_BUNDLE[relPath]) {
+            const ext = path.extname(relPath).toLowerCase();
+            const contentType = MIME_TYPES[ext] || 'text/html; charset=utf-8';
+            res.writeHead(200, { 'Content-Type': contentType });
+            res.end(GAMES_BUNDLE[relPath]);
+            return;
+        }
+
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('404 ไม่พบไฟล์');
     });
 
     // WebSocket Server สำหรับคุยแบบเรียลไทม์ระหว่างจอโน้ตบุ๊กและมือถือ
@@ -129,19 +162,16 @@ async function startServer() {
                         clientRole = data.role;
                         if (data.role === 'host') {
                             hosts.add(ws);
-                            // ส่งจำนวนมือถือที่เชื่อมต่ออยู่ไปให้หน้าจอ
                             ws.send(JSON.stringify({
                                 type: 'CONTROLLER_COUNT',
                                 count: controllers.size
                             }));
                         } else if (data.role === 'controller') {
                             controllers.add(ws);
-                            // แจ้งเตือนหน้าจอว่ามีมือถือเข้ามาใหม่
                             broadcastToHosts({
                                 type: 'CONTROLLER_CONNECTED',
                                 count: controllers.size
                             });
-                            // ขอสถานะเกมล่าสุดจากโฮสต์มาส่งให้มือถือ
                             broadcastToHosts({
                                 type: 'REQUEST_STATE'
                             });
@@ -202,8 +232,8 @@ async function startServer() {
 
     server.listen(PORT, '0.0.0.0', () => {
         console.log('==================================================');
-        console.log('🎮 สวนสัตว์หรรษา - เซิร์ฟเวอร์พร้อมทำงานแล้ว!');
-        console.log(`💻 หน้าจอโน้ตบุ๊ก: http://localhost:${PORT}`);
+        console.log('🎮 สวนสนุกเสริมพัฒนาการ 30 เกม - เซิร์ฟเวอร์พร้อมทำงานแล้ว!');
+        console.log(`💻 หน้าจอหลัก: http://localhost:${PORT}`);
         console.log(`📱 โทรศัพท์มือถือ: ${controllerURL}`);
         console.log('==================================================');
     });
