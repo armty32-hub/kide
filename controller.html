@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>จอยกดสวนสนุก 20 เกม 🎮</title>
+    <link rel="stylesheet" href="controller.css">
+</head>
+<body>
+
+    <!-- แถบด้านบน: สถานะการเชื่อมต่อ -->
+    <header class="controller-header">
+        <div class="status-indicator" id="connection-status">
+            <span class="status-dot"></span>
+            <span id="status-text">กำลังเชื่อมต่อ...</span>
+        </div>
+        <div class="active-game-badge" id="active-game-badge">
+            <span>🎪</span>
+            <span id="active-game-name">สวนสนุก 20 เกม</span>
+        </div>
+    </header>
+
+    <!-- มุมมองที่ 1: หน้าเลือกเกมบนมือถือ (เมื่อยังไม่ได้เข้าเกม) -->
+    <section id="view-hub" class="controller-view active">
+        <div class="helper-text">
+            👉 แตะเลือกเกมที่อยากเล่นบนจอใหญ่ได้เลยนะ!
+        </div>
+        <div class="hub-game-list" id="hub-game-list">
+            <!-- รายชื่อ 20 เกมจะถูกสร้างโดย JS -->
+        </div>
+    </section>
+
+    <!-- มุมมองที่ 2: หน้าจอยควบคุมขณะเล่นเกม -->
+    <section id="view-gameplay" class="controller-view">
+        <div class="controller-bar">
+            <button id="btn-back-to-hub" class="pill-btn back-hub-btn">
+                <span>🏠</span> กลับเลือกเกม
+            </button>
+            <div class="mini-score">
+                <span>🎯</span>
+                <span id="score-text">กำลังเล่น</span>
+            </div>
+            <button id="btn-ctrl-restart" class="pill-btn restart-btn" title="เริ่มใหม่">
+                🔄 เริ่มใหม่
+            </button>
+        </div>
+
+        <main class="controller-board-wrap">
+            <div class="helper-text" id="game-helper-text">
+                👆 แตะปุ่มเพื่อควบคุมเกมบนจอโน้ตบุ๊ก!
+            </div>
+            <div id="controller-grid" class="controller-grid grid-3">
+                <!-- ปุ่มกดสัมผัสสำหรับเกมที่กำลังเล่น -->
+            </div>
+        </main>
+    </section>
+
+    <!-- Toast ชนะ -->
+    <div id="ctrl-win-toast" class="win-toast">
+        <div class="toast-content">
+            <span class="toast-trophy">🏆</span>
+            <span class="toast-msg">เย้! ชนะแล้วคนเก่ง!</span>
+        </div>
+    </div>
+
+    <script src="gamesData.js"></script>
+    <script src="controller.js"></script>
+</body>
+</html>

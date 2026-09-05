@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎪 สวนสนุกเสริมพัฒนาการ 20 เกมสำหรับเด็ก</title>
+    <link rel="stylesheet" href="hub.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ส่วนหัวแดชบอร์ด -->
+    <header class="hub-header">
+        <div class="hub-title-card">
+            <span style="font-size: 2.5rem;">🎪</span>
+            <h1 class="hub-title">สวนสนุกเสริมพัฒนาการ</h1>
+            <span style="font-size: 2.5rem;">🚀</span>
+        </div>
+        <p class="hub-subtitle">ศูนย์รวม 20 เกมพัฒนาสมอง สมาธิ และกล้ามเนื้อมือ สำหรับเด็กไม่เกิน 6 ขวบ ✨</p>
+    </header>
+
+    <!-- แถบเครื่องมือและตัวกรองหมวดหมู่ -->
+    <div class="hub-toolbar">
+        <div class="category-filter-bar">
+            <button class="cat-btn active" data-cat="all">🌟 ทั้งหมด (30)</button>
+            <button class="cat-btn" data-cat="thai">📖 ภาษาไทย & นิทาน (6)</button>
+            <button class="cat-btn" data-cat="math">➕ บวกเลข & คณิต (8)</button>
+            <button class="cat-btn" data-cat="memory">🧠 ความจำ & สังเกต (4)</button>
+            <button class="cat-btn" data-cat="colors">🎨 สีสัน & จำแนก (4)</button>
+            <button class="cat-btn" data-cat="motor">⚡ กล้ามเนื้อมือ & ตา (4)</button>
+            <button class="cat-btn" data-cat="creativity">🎵 ดนตรี & ศิลปะ (4)</button>
+        </div>
+
+        <div class="hub-actions">
+            <!-- สถานะจอยมือถือ -->
+            <span class="phone-badge" id="phone-badge">
+                <span class="dot-status"></span>
+                <span id="phone-status-text">รอต่อจอยมือถือ...</span>
+            </span>
+            <button id="btn-phone-connect" class="btn-icon btn-phone" title="ใช้มือถือเป็นจอยกด">
+                <span>📱</span> <span>ต่อจอยมือถือ</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- กริดแสดงการ์ดทั้ง 20 เกม -->
+    <main class="games-grid" id="games-grid">
+        <!-- เกมจะถูกสร้างโดย hub.js จาก gamesData.js -->
+    </main>
+
+    <!-- Fullscreen Game Modal (เล่นเกมข้างในนี้ได้เลยโดยไม่ต้องโหลดหน้าใหม่) -->
+    <div id="game-modal" class="game-frame-modal">
+        <div class="frame-top-bar">
+            <div class="frame-game-title" id="frame-title">🎮 กำลังเปิดเกม...</div>
+            <button class="btn-exit-game" id="btn-exit-game">
+                <span>🏠</span> กลับสวนสนุก (เลือกเกมใหม่)
+            </button>
+        </div>
+        <iframe id="game-iframe" class="game-iframe" src="about:blank"></iframe>
+    </div>
+
+    <!-- หน้าต่าง QR Code ต่อมือถือ -->
+    <div id="qr-modal" class="modal-overlay">
+        <div class="modal-content qr-content">
+            <button class="btn-close-modal" id="btn-close-qr">✕</button>
+            <div class="qr-header">
+                <span class="qr-icon">📱</span>
+                <h2>ใช้มือถือเป็นจอยกด</h2>
+            </div>
+            <p class="qr-desc">ใช้กล้องโทรศัพท์มือถือสแกน QR Code ด้านล่างนี้ได้เลยครับ (ต่อ Wi-Fi เดียวกัน)</p>
+            <div class="qr-image-container">
+                <img id="qr-image" src="" alt="QR Code สำหรับต่อมือถือ" style="display:none;">
+                <div id="qr-loading" class="qr-loading">กำลังสร้าง QR Code...</div>
+            </div>
+            <div class="qr-url-box">
+                <span class="url-label">หรือเปิดผ่านลิงก์นี้ในมือถือ:</span>
+                <a id="qr-link" href="#" target="_blank" class="url-link">-</a>
+            </div>
+            <div class="qr-tips">
+                💡 <strong>เคล็ดลับ:</strong> เมื่อเชื่อมต่อแล้ว น้องๆ สามารถเลือกเกมและกดปุ่มจากมือถือเพื่อเล่นเกมบนจอโน้ตบุ๊กได้ทันที!
+            </div>
+        </div>
+    </div>
+
+    <script src="gamesData.js"></script>
+    <script src="hub.js"></script>
+</body>
+</html>
