@@ -121,6 +121,20 @@ async function startServer() {
         let relPath = (pathname === '/' ? 'index.html' : pathname).replace(/^\/+/, '');
         let filePath = path.join(__dirname, relPath);
 
+        // หากเป็น directory หรือไม่มี extension ให้ค้นหา index.html อัตโนมัติ
+        if (fs.existsSync(filePath)) {
+            if (fs.statSync(filePath).isDirectory()) {
+                filePath = path.join(filePath, 'index.html');
+                relPath = path.join(relPath, 'index.html').replace(/\\/g, '/');
+            }
+        } else if (!path.extname(relPath)) {
+            const tryIndex = path.join(filePath, 'index.html');
+            if (fs.existsSync(tryIndex)) {
+                filePath = tryIndex;
+                relPath = path.join(relPath, 'index.html').replace(/\\/g, '/');
+            }
+        }
+
         // ตรวจสอบไฟล์บนเครื่อง
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = path.extname(filePath).toLowerCase();
@@ -131,12 +145,21 @@ async function startServer() {
         }
 
         // Fallback: หากไฟล์ไม่มีบนเครื่อง ให้ดึงจาก GAMES_BUNDLE โดยตรง (แก้ปัญหา 404 บนคลาวด์ 100%)
-        if (GAMES_BUNDLE[relPath]) {
-            const ext = path.extname(relPath).toLowerCase();
-            const contentType = MIME_TYPES[ext] || 'text/html; charset=utf-8';
-            res.writeHead(200, { 'Content-Type': contentType });
-            res.end(GAMES_BUNDLE[relPath]);
-            return;
+        const cleanKey = relPath.replace(/\\/g, '/').replace(/\/+$/, '');
+        const possibleKeys = [
+            relPath.replace(/\\/g, '/'),
+            cleanKey,
+            cleanKey + '/index.html',
+            cleanKey + '.html'
+        ];
+        for (const k of possibleKeys) {
+            if (GAMES_BUNDLE[k]) {
+                const ext = path.extname(k).toLowerCase() || '.html';
+                const contentType = MIME_TYPES[ext] || 'text/html; charset=utf-8';
+                res.writeHead(200, { 'Content-Type': contentType });
+                res.end(GAMES_BUNDLE[k]);
+                return;
+            }
         }
 
         res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
