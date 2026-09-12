@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ร้านค้าขนมหวานคิดเงิน - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .shop-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .tray-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0 25px;
+            flex-wrap: wrap;
+        }
+        .shop-item-card {
+            background: #ffffff;
+            border: 4px solid #fbcfe8;
+            border-radius: 24px;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 6px 0 #f472b6;
+            min-width: 130px;
+        }
+        .item-art {
+            font-size: 4rem;
+            margin-bottom: 6px;
+        }
+        .item-price-tag {
+            background: #ec4899;
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 16px;
+        }
+        .shop-plus {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #db2777;
+        }
+        .choices-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .coin-btn {
+            padding: 14px 24px;
+            border-radius: 24px;
+            background: #ffffff;
+            border: 4px solid #fbcfe8;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #be185d;
+            box-shadow: 0 6px 0 #f472b6;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .coin-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #f472b6;
+        }
+        .coin-btn.correct {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+        .coin-btn.wrong {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🧁</span>
+            <h1 class="game-title">ร้านค้าขนมหวานคิดเงิน</h1>
+            <span class="title-emoji">🪙</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ลูกค้าคนที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="shop-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #9d174d; margin-bottom: 10px;">
+            ซื้อขนมสองอย่างนี้ ต้องจ่ายเหรียญรวมกันกี่บาทเอ่ย? 🧁🍦
+        </div>
+
+        <div class="tray-row">
+            <div class="shop-item-card" id="card1">
+                <span class="item-art" id="art1">🍦</span>
+                <span class="item-price-tag" id="price1">2 บาท</span>
+            </div>
+            <span class="shop-plus">➕</span>
+            <div class="shop-item-card" id="card2">
+                <span class="item-art" id="art2">🧁</span>
+                <span class="item-price-tag" id="price2">3 บาท</span>
+            </div>
+        </div>
+
+        <div class="choices-row" id="choices-row"></div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">คิดเงินเก่งมากเถ้าแก่น้อย!</h2>
+            <p class="modal-subtitle">หนูรวมเงินค่าขนมหวานได้ถูกต้องทุกออเดอร์เลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const SWEETS = [
+            { e: '🍦', n: 'ไอศกรีม' },
+            { e: '🧁', n: 'คัพเค้ก' },
+            { e: '🍩', n: 'โดนัท' },
+            { e: '🍭', n: 'อมยิ้ม' },
+            { e: '🍰', n: 'เค้กส้ม' }
+        ];
+
+        let currentQ = 0, score = 0, isLocked = false, totalPrice = 0, choices = [];
+        const art1 = document.getElementById('art1');
+        const price1 = document.getElementById('price1');
+        const art2 = document.getElementById('art2');
+        const price2 = document.getElementById('price2');
+        const choicesRow = document.getElementById('choices-row');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+
+            const sw1 = SWEETS[Math.floor(Math.random() * SWEETS.length)];
+            const sw2 = SWEETS[Math.floor(Math.random() * SWEETS.length)];
+            const p1 = Math.floor(Math.random() * 3) + 1; // 1..3
+            const p2 = Math.floor(Math.random() * 3) + 1; // 1..3
+            totalPrice = p1 + p2;
+
+            art1.textContent = sw1.e;
+            price1.textContent = `${p1} บาท`;
+            art2.textContent = sw2.e;
+            price2.textContent = `${p2} บาท`;
+
+            choices = [totalPrice, totalPrice + 1, Math.max(2, totalPrice - 1)].sort(() => 0.5 - Math.random());
+            choicesRow.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'coin-btn';
+                btn.innerHTML = `<span>🪙</span> ${c} บาท`;
+                btn.addEventListener('click', () => check(idx));
+                choicesRow.appendChild(btn);
+            });
+
+            soundManager.speakThai(`ซื้อขนมสองอย่างนี้ รวมเป็นกี่บาทเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: '🪙', name: `${ch} บาท` }))
+                }));
+            }
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const btns = choicesRow.children;
+            if (choices[idx] === totalPrice) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                soundManager.playMatch();
+                soundManager.speakThai(`กริ๊งงง! ถูกต้องแล้วจ้า ทั้งหมด ${totalPrice} บาท ขอบคุณจ้า!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < 5) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองบวกราคาดูอีกรอบ!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => { currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.body.onclick = () => soundManager.init();
+        loadQuestion();
+    </script>
+</body>
+</html>

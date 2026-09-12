@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>สวนสนุกสระภาษาไทย - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .vowel-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .mode-toggle-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .mode-btn {
+            font-family: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 20px;
+            border: 3px solid #ddd6fe;
+            background: #ffffff;
+            color: #6d28d9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background: #7c3aed;
+            color: #ffffff;
+            border-color: #6d28d9;
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Quiz View */
+        .quiz-view {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .prompt-card {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border: 4px solid #8b5cf6;
+            border-radius: 24px;
+            padding: 18px 24px;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 25px;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(139, 92, 246, 0.15);
+        }
+        .prompt-title {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #5b21b6;
+        }
+        .prompt-sub {
+            font-size: 1.15rem;
+            color: #6d28d9;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .choices-row {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .choice-card-btn {
+            flex: 1;
+            min-width: 140px;
+            max-width: 180px;
+            height: 160px;
+            background: #ffffff;
+            border: 4px solid #ddd6fe;
+            border-radius: 26px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #c4b5fd;
+            transition: all 0.15s;
+        }
+        .choice-card-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #c4b5fd;
+        }
+        .choice-card-btn.correct {
+            background: #22c55e;
+            border-color: #16a34a;
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+        .choice-card-btn.wrong {
+            background: #ef4444;
+            border-color: #dc2626;
+            color: #ffffff;
+        }
+        .choice-sym {
+            font-size: 3.8rem;
+            font-weight: 900;
+            color: #6d28d9;
+            line-height: 1.1;
+        }
+        .choice-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #4c1d95;
+            margin-top: 6px;
+        }
+        .choice-card-btn.correct .choice-sym,
+        .choice-card-btn.correct .choice-name,
+        .choice-card-btn.wrong .choice-sym,
+        .choice-card-btn.wrong .choice-name {
+            color: #ffffff;
+        }
+
+        /* Explore View */
+        .explore-view {
+            width: 100%;
+            display: none;
+        }
+        .vowels-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+        .vowel-explore-card {
+            background: #ffffff;
+            border: 3px solid #ddd6fe;
+            border-radius: 20px;
+            padding: 12px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #c4b5fd;
+            transition: all 0.15s;
+        }
+        .vowel-explore-card:active {
+            transform: translateY(3px);
+            background: #f5f3ff;
+            border-color: #7c3aed;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🔤</span>
+            <h1 class="game-title">สวนสนุกสระภาษาไทย</h1>
+            <span class="title-emoji">🎪</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มรอบใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / <span id="total-q">10</span></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="vowel-stage">
+        <div class="mode-toggle-bar">
+            <button class="mode-btn active" id="tab-quiz" onclick="switchMode('quiz')">🎯 เล่นเกมทายสระ</button>
+            <button class="mode-btn" id="tab-explore" onclick="switchMode('explore')">📖 สำรวจฟังเสียงสระ</button>
+        </div>
+
+        <!-- หน้าเล่นเกมทายสระ -->
+        <div class="quiz-view" id="quiz-view">
+            <div class="prompt-card" onclick="speakTarget()">
+                <div class="prompt-title" id="prompt-title">สระไหนคือ "สระ อา" เอ่ย? 🔊</div>
+                <div class="prompt-sub">แตะเพื่อฟังเสียงอีกครั้งนะ</div>
+            </div>
+
+            <div class="choices-row" id="choices-row"></div>
+        </div>
+
+        <!-- หน้าสำรวจสระทั้งหมด -->
+        <div class="explore-view" id="explore-view">
+            <div style="font-size: 1.15rem; font-weight: 700; color: #5b21b6; margin-bottom: 12px; text-align: center;">
+                แตะที่สระแต่ละตัวเพื่อฟังเสียงอ่านออกเสียงนะจ๊ะ! 🔊
+            </div>
+            <div class="vowels-grid" id="explore-grid"></div>
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">เก่งสระภาษาไทยยอดเยี่ยม!</h2>
+            <p class="modal-subtitle">หนูจำและทายสระภาษาไทยได้ถูกต้องครบทุกข้อเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div style="display:flex;gap:12px;width:100%;margin-top:15px;flex-wrap:wrap;">
+                <button id="btn-next-level" class="btn-play-again" style="background:#7c3aed;flex:1;min-width:180px;">🌟 เล่นต่อด่านถัดไป!</button>
+                <button id="btn-play-again" class="btn-play-again" style="background:#0284c7;flex:1;min-width:180px;">🔄 เริ่มรอบใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const VOWELS_POOL = [
+            { s: '-ะ', n: 'สระ อะ', voice: 'สระ อะ', ex: 'มะระ' },
+            { s: '-า', n: 'สระ อา', voice: 'สระ อา', ex: 'กา ตา' },
+            { s: '-ิ', n: 'สระ อิ', voice: 'สระ อิ', ex: 'มะลิ' },
+            { s: '-ี', n: 'สระ อี', voice: 'สระ อี', ex: 'ฝาชี' },
+            { s: '-ึ', n: 'สระ อึ', voice: 'สระ อึ', ex: 'ตึก' },
+            { s: '-ือ', n: 'สระ อือ', voice: 'สระ อือ', ex: 'มือ' },
+            { s: '-ุ', n: 'สระ อุ', voice: 'สระ อุ', ex: 'พายุ' },
+            { s: '-ู', n: 'สระ อู', voice: 'สระ อู', ex: 'ปู งู' },
+            { s: 'เ-ะ', n: 'สระ เอะ', voice: 'สระ เอะ', ex: 'เตะ' },
+            { s: 'เ-', n: 'สระ เอ', voice: 'สระ เอ', ex: 'เกเร' },
+            { s: 'แ-ะ', n: 'สระ แอะ', voice: 'สระ แอะ', ex: 'แกะ' },
+            { s: 'แ-', n: 'สระ แอ', voice: 'สระ แอ', ex: 'แพ แม่' },
+            { s: 'โ-ะ', n: 'สระ โอะ', voice: 'สระ โอะ', ex: 'โต๊ะ' },
+            { s: 'โ-', n: 'สระ โอ', voice: 'สระ โอ', ex: 'แตงโม' },
+            { s: 'ใ-', n: 'สระ ใอ ไม้ม้วน', voice: 'สระ ใอ ไม้ม้วน', ex: 'ใบไม้' },
+            { s: 'ไ-', n: 'สระ ไอ ไม้มลาย', voice: 'สระ ไอ ไม้มลาย', ex: 'ไป ไก่' },
+            { s: 'เ-า', n: 'สระ เอา', voice: 'สระ เอา', ex: 'เตาไฟ' },
+            { s: '-ำ', n: 'สระ อำ', voice: 'สระ อำ', ex: 'ระบำ' }
+        ];
+
+        const TOTAL_ROUNDS = 10;
+        let mode = 'quiz';
+        let sessionVowels = [];
+        let currentQ = 0, score = 0, isLocked = false, currentChoices = [];
+        const quizView = document.getElementById('quiz-view');
+        const exploreView = document.getElementById('explore-view');
+        const promptTitle = document.getElementById('prompt-title');
+        const choicesRow = document.getElementById('choices-row');
+        const exploreGrid = document.getElementById('explore-grid');
+        const qEl = document.getElementById('current-q');
+        const totalQEl = document.getElementById('total-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD' && mode === 'quiz') check(d.index);
+            };
+        } catch(e){}
+
+        function switchMode(newMode) {
+            mode = newMode;
+            document.getElementById('tab-quiz').classList.toggle('active', mode === 'quiz');
+            document.getElementById('tab-explore').classList.toggle('active', mode === 'explore');
+            quizView.style.display = mode === 'quiz' ? 'flex' : 'none';
+            exploreView.style.display = mode === 'explore' ? 'block' : 'none';
+            if (mode === 'quiz') {
+                initSession(false);
+            }
+        }
+
+        // Render Explore Grid
+        exploreGrid.innerHTML = '';
+        VOWELS_POOL.forEach(v => {
+            const card = document.createElement('div');
+            card.className = 'vowel-explore-card';
+            card.innerHTML = `
+                <span style="font-size:2.5rem;font-weight:900;color:#6d28d9;">${v.s}</span>
+                <span style="font-size:1rem;font-weight:700;color:#4c1d95;margin-top:4px;">${v.n}</span>
+                <span style="font-size:0.85rem;color:#64748b;">${v.ex}</span>
+            `;
+            card.onclick = () => {
+                soundManager.playFlip();
+                soundManager.speakThai(`${v.voice}... ตัวอย่างเช่น ${v.ex}`);
+            };
+            exploreGrid.appendChild(card);
+        });
+
+        function initSession(resetScore = true) {
+            sessionVowels = [...VOWELS_POOL].sort(() => 0.5 - Math.random()).slice(0, TOTAL_ROUNDS);
+            currentQ = 0;
+            if (resetScore) {
+                score = 0;
+                scoreEl.textContent = '0';
+            }
+            if (totalQEl) totalQEl.textContent = TOTAL_ROUNDS;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            const target = sessionVowels[currentQ];
+
+            promptTitle.textContent = `สระไหนคือ "${target.n}" เอ่ย? 🔊`;
+
+            // Pick 2 wrong vowels
+            const others = VOWELS_POOL
+                .filter(v => v.n !== target.n)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 2);
+
+            currentChoices = [target, ...others].sort(() => 0.5 - Math.random());
+            choicesRow.innerHTML = '';
+            currentChoices.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-card-btn';
+                btn.innerHTML = `
+                    <span class="choice-sym">${c.s}</span>
+                    <span class="choice-name">${c.n}</span>
+                `;
+                btn.addEventListener('click', () => check(idx));
+                choicesRow.appendChild(btn);
+            });
+
+            speakTarget();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: currentChoices.map((ch, i) => ({ index: i, emoji: '🔤', name: ch.n }))
+                }));
+            }
+        }
+
+        function speakTarget() {
+            const target = sessionVowels[currentQ];
+            soundManager.speakThai(`สระไหนคือ ${target.voice} เอ่ย?`);
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const target = sessionVowels[currentQ];
+            const btns = choicesRow.children;
+            if (currentChoices[idx].n === target.n) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! นี่คือ${target.voice}! เก่งมาก!`);
+                score += 10;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < TOTAL_ROUNDS) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองฟังสระอีกที!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => initSession(true);
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initSession(true); };
+        document.getElementById('btn-next-level').onclick = () => { modal.classList.remove('active'); initSession(false); };
+        document.body.onclick = () => soundManager.init();
+        initSession(true);
+    </script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ลากเส้นตามรอยดวงดาว - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .sky-stage {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            height: 460px;
+            background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
+            border: 5px solid #ffffff;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        #trace-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .star-point {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 4px solid #facc15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #854d0e;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.6);
+            transition: transform 0.2s, background 0.2s;
+            z-index: 10;
+        }
+        .star-point.active {
+            animation: pulse 1s infinite alternate;
+            background: #fef08a;
+            transform: scale(1.15);
+        }
+        .star-point.connected {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">⭐</span>
+            <h1 class="game-title">ลากเส้นตามรอยดวงดาว</h1>
+            <span class="title-emoji">✨</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>แตะดาวดวงที่: <strong id="next-star">1</strong></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span id="star-progress">🌟 0 / 5</span>
+        </div>
+    </div>
+
+    <main class="sky-stage" id="sky-stage">
+        <canvas id="trace-canvas"></canvas>
+        <!-- ดวงดาว 1..5 จะถูกวางตามพิกัด -->
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">⭐</div>
+            <h2 class="modal-title">กลุ่มดาวส่องแสงแล้ว!</h2>
+            <p class="modal-subtitle">หนูต่อจุดดวงดาว 1 ถึง 5 ได้ถูกต้อง ลายเส้นสวยมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const POINTS = [
+            { id: 1, x: 100, y: 180 },
+            { id: 2, x: 220, y: 90 },
+            { id: 3, x: 340, y: 180 },
+            { id: 4, x: 290, y: 320 },
+            { id: 5, x: 150, y: 320 }
+        ];
+
+        let currentTarget = 1;
+        const stage = document.getElementById('sky-stage');
+        const canvas = document.getElementById('trace-canvas');
+        const ctx = canvas.getContext('2d');
+        const nextStarEl = document.getElementById('next-star');
+        const progressEl = document.getElementById('star-progress');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') handleStarClick(d.index + 1);
+            };
+        } catch(e){}
+
+        function initStars() {
+            canvas.width = stage.clientWidth;
+            canvas.height = stage.clientHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            document.querySelectorAll('.star-point').forEach(e => e.remove());
+            currentTarget = 1;
+            nextStarEl.textContent = '1';
+            progressEl.textContent = '🌟 0 / 5';
+
+            POINTS.forEach(p => {
+                const el = document.createElement('div');
+                el.className = `star-point ${p.id === 1 ? 'active' : ''}`;
+                el.textContent = p.id;
+                el.style.left = `${(p.x / 450) * (stage.clientWidth - 70) + 20}px`;
+                el.style.top = `${(p.y / 400) * (stage.clientHeight - 80) + 20}px`;
+                el.id = `star-${p.id}`;
+                el.onclick = () => handleStarClick(p.id);
+                stage.appendChild(el);
+            });
+
+            soundManager.speakThai("แตะดวงดาวตามลำดับ 1 ถึง 5 เลยนะ!");
+            syncPhone();
+        }
+
+        function handleStarClick(id) {
+            if (id === currentTarget) {
+                soundManager.playMatch();
+                const star = document.getElementById(`star-${id}`);
+                star.className = 'star-point connected';
+
+                if (currentTarget > 1) {
+                    const prevP = POINTS[currentTarget - 2];
+                    const currP = POINTS[currentTarget - 1];
+                    const prevEl = document.getElementById(`star-${prevP.id}`);
+                    const currEl = document.getElementById(`star-${currP.id}`);
+
+                    ctx.strokeStyle = '#facc15';
+                    ctx.lineWidth = 6;
+                    ctx.shadowColor = '#fde047';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.moveTo(prevEl.offsetLeft + 27, prevEl.offsetTop + 27);
+                    ctx.lineTo(currEl.offsetLeft + 27, currEl.offsetTop + 27);
+                    ctx.stroke();
+                }
+
+                soundManager.speakThai(`ดาวดวงที่ ${id}!`);
+                currentTarget++;
+
+                if (currentTarget <= 5) {
+                    nextStarEl.textContent = currentTarget;
+                    progressEl.textContent = `🌟 ${id} / 5`;
+                    const nextEl = document.getElementById(`star-${currentTarget}`);
+                    if (nextEl) nextEl.classList.add('active');
+                } else {
+                    // เชื่อมดาวดวงที่ 5 กลับดวงที่ 1
+                    const p1 = document.getElementById('star-1');
+                    const p5 = document.getElementById('star-5');
+                    ctx.beginPath();
+                    ctx.moveTo(p5.offsetLeft + 27, p5.offsetTop + 27);
+                    ctx.lineTo(p1.offsetLeft + 27, p1.offsetTop + 27);
+                    ctx.stroke();
+
+                    progressEl.textContent = '🌟 ครบ 5 / 5!';
+                    soundManager.playWin();
+                    modal.classList.add('active');
+                    if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                }
+                syncPhone();
+            } else {
+                soundManager.playMismatch();
+                soundManager.speakThai(`แตะดาวดวงที่ ${currentTarget} ก่อนจ้า!`);
+            }
+        }
+
+        function syncPhone() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 5,
+                    matchedPairs: currentTarget - 1,
+                    cards: POINTS.map(p => ({ index: p.id - 1, emoji: '⭐', name: `ดาว ${p.id}` }))
+                }));
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = initStars;
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initStars(); };
+        window.addEventListener('resize', initStars);
+        document.body.onclick = () => soundManager.init();
+        setTimeout(initStars, 100);
+    </script>
+</body>
+</html>

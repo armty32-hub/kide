@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>จิ้มลูกโป่งแตกฟองสบู่ - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .balloon-stage {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            height: 520px;
+            background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 70%, #bbf7d0 100%);
+            border: 5px solid #ffffff;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 50px;
+            pointer-events: none;
+        }
+        .balloon-item {
+            position: absolute;
+            font-size: 4.8rem;
+            cursor: pointer;
+            user-select: none;
+            filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15));
+            transition: transform 0.1s;
+        }
+        .balloon-item:active {
+            transform: scale(0.9);
+        }
+        .pop-burst {
+            position: absolute;
+            font-size: 3.5rem;
+            pointer-events: none;
+            animation: burstFade 0.4s ease-out forwards;
+        }
+        @keyframes burstFade {
+            0% { transform: scale(0.6); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.9; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .color-triggers {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .color-trigger-btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .color-trigger-btn:active {
+            transform: translateY(3px);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti-canvas"></canvas>
+
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🫧</span>
+            <h1 class="game-title">จิ้มลูกโป่งแตกฟองสบู่</h1>
+            <span class="title-emoji">🎈</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าสวนสนุก 31 เกม">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-phone-connect" class="btn-icon btn-phone" title="ใช้โทรศัพท์มือถือเป็นจอยกด">
+                <span>📱</span> <span class="btn-text">ต่อจอยมือถือ</span>
+            </button>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">🎈</span>
+            <span>แตกแล้ว: <strong id="pop-count">0</strong> / <strong>10</strong> ลูก</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">✨</span>
+            <span id="pop-stars">⭐</span>
+        </div>
+    </div>
+
+    <main class="balloon-stage" id="stage">
+        <div class="cloud" style="top: 20px; left: 30px; width: 90px; height: 35px;"></div>
+        <div class="cloud" style="top: 50px; right: 50px; width: 120px; height: 45px;"></div>
+    </main>
+
+    <!-- ป๊อปอัปเมื่อแตกครบ 10 ลูก -->
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">ว้าว แตกหมดเลย!</h2>
+            <p class="modal-subtitle">หนูจิ้มลูกโป่งแตกได้ครบ 10 ลูก นิ้วไวมากๆ เลยครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">
+                <span>🎮</span> เล่นอีกรอบนะ!
+            </button>
+        </div>
+    </div>
+
+    <script src="../memory-match/sounds.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

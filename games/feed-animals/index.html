@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ให้อาหารสัตว์ตามที่ชอบ - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .feed-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .hungry-animal {
+            font-size: 6rem;
+            margin: 15px 0 10px;
+            animation: pulse 1.5s infinite ease-in-out;
+            transition: transform 0.3s;
+        }
+        .hungry-bubble {
+            background: #fef3c7;
+            border: 3px solid #fde047;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #854d0e;
+            margin-bottom: 25px;
+        }
+        .foods-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .food-btn {
+            flex: 1;
+            max-width: 150px;
+            background: #ffffff;
+            border: 4px solid #fed7aa;
+            border-radius: 24px;
+            padding: 16px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #fdba74;
+            transition: all 0.15s;
+        }
+        .food-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #fdba74;
+        }
+        .food-btn.correct {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .food-btn.wrong {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🍌</span>
+            <h1 class="game-title">ให้อาหารสัตว์ตามที่ชอบ</h1>
+            <span class="title-emoji">🥕</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="feed-stage">
+        <div class="hungry-animal" id="hungry-animal">🐵</div>
+        <div class="hungry-bubble" id="hungry-bubble">ลิงจ๋อหิวแล้ว อยากกินอะไรนะ? 🍽️</div>
+
+        <div class="foods-row" id="foods-row">
+            <!-- อาหาร 3 ชนิด -->
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">สัตว์ทุกตัวอิ่มแปล้แล้ว!</h2>
+            <p class="modal-subtitle">หนูรู้ใจสัตว์ทุกตัว ให้อาหารได้ถูกต้องและใจดีมากๆ เลย!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const ALL_ANIMALS = [
+            { a: '🐵', name: 'ลิงจ๋อ', food: { e: '🍌', n: 'กล้วยหอม' } },
+            { a: '🐰', name: 'น้องกระต่าย', food: { e: '🥕', n: 'แครอท' } },
+            { a: '🐶', name: 'น้องหมา', food: { e: '🦴', n: 'กระดูก' } },
+            { a: '🐱', name: 'น้องแมว', food: { e: '🐟', n: 'ปลาสด' } },
+            { a: '🐼', name: 'หมีแพนด้า', food: { e: '🎋', n: 'ใบไผ่' } },
+            { a: '🐭', name: 'เจ้าหนูน้อย', food: { e: '🧀', n: 'ก้อนชีส' } },
+            { a: '🐝', name: 'พี่ผึ้ง', food: { e: '🌸', n: 'น้ำหวานดอกไม้' } },
+            { a: '🐸', name: 'เจ้ากบน้อย', food: { e: '🪰', n: 'แมลงตัวเล็ก' } },
+            { a: '🐦', name: 'นกน้อย', food: { e: '🐛', n: 'หนอนน้อย' } },
+            { a: '🐘', name: 'พี่ช้าง', food: { e: '🎍', n: 'ต้นอ้อยหวาน' } },
+            { a: '🐮', name: 'แม่วัว', food: { e: '🌾', n: 'หญ้าเขียว' } },
+            { a: '🐻', name: 'พ่อหมี', food: { e: '🍯', n: 'น้ำผึ้งหวาน' } },
+            { a: '🐿️', name: 'กระรอกน้อย', food: { e: '🌰', n: 'ลูกเกาลัด' } },
+            { a: '🐴', name: 'พี่ม้า', food: { e: '🥕', n: 'แครอทกรอบ' } },
+            { a: '🐧', name: 'นกเพนกวิน', food: { e: '🦐', n: 'กุ้งตัวเล็ก' } },
+            { a: '🐨', name: 'หมีโคอาล่า', food: { e: '🌿', n: 'ใบยูคาลิปตัส' } }
+        ];
+
+        const TOTAL_ROUNDS = 5;
+        let sessionPairs = [];
+        let currentQ = 0, score = 0, isLocked = false, choices = [];
+        const animalEl = document.getElementById('hungry-animal');
+        const bubbleEl = document.getElementById('hungry-bubble');
+        const foodsRow = document.getElementById('foods-row');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function initSession() {
+            sessionPairs = [...ALL_ANIMALS].sort(() => 0.5 - Math.random()).slice(0, TOTAL_ROUNDS);
+            currentQ = 0;
+            score = 0;
+            scoreEl.textContent = '0';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            const p = sessionPairs[currentQ];
+
+            animalEl.textContent = p.a;
+            bubbleEl.textContent = `${p.name}หิวแล้ว อยากกินอะไรนะ? 🍽️`;
+
+            // Pick 2 wrong foods from other animals
+            const otherFoods = ALL_ANIMALS
+                .filter(item => item.food.n !== p.food.n)
+                .map(item => item.food)
+                .filter((food, idx, self) => idx === self.findIndex(f => f.n === food.n));
+            const shuffledOthers = otherFoods.sort(() => 0.5 - Math.random()).slice(0, 2);
+
+            choices = [p.food, ...shuffledOthers].sort(() => 0.5 - Math.random());
+            foodsRow.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'food-btn';
+                btn.innerHTML = `<span style="font-size:3.5rem;">${c.e}</span><span style="font-size:1.1rem;font-weight:700;margin-top:4px;">${c.n}</span>`;
+                btn.addEventListener('click', () => check(idx));
+                foodsRow.appendChild(btn);
+            });
+
+            soundManager.speakThai(`${p.name}อยากกินอะไรเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: ch.e, name: ch.n }))
+                }));
+            }
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const p = sessionPairs[currentQ];
+            const btns = foodsRow.children;
+            if (choices[idx].n === p.food.n) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                animalEl.style.transform = 'scale(1.25) rotate(-5deg)';
+                soundManager.playMatch();
+                soundManager.speakThai(`ง่ำๆๆ อร่อยจัง! ${p.name}ชอบกิน${p.food.n}ที่สุด ขอบคุณนะ!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    animalEl.style.transform = 'scale(1)';
+                    currentQ++;
+                    if (currentQ < TOTAL_ROUNDS) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ สัตว์ตัวนี้ไม่กินอันนี้!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = initSession;
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initSession(); };
+        document.body.onclick = () => soundManager.init();
+        initSession();
+    </script>
+</body>
+</html>

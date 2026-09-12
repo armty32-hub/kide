@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ต่อบล็อกรูปทรงเรขาคณิต - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .shape-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .slot-box {
+            width: 170px;
+            height: 170px;
+            border: 4px dashed #0d9488;
+            border-radius: 28px;
+            background: #f0fdfa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .slot-target-icon {
+            font-size: 6rem;
+            filter: grayscale(1) opacity(0.25);
+            transition: all 0.3s;
+        }
+        .slot-target-icon.filled {
+            filter: none;
+            animation: bounce 0.6s ease;
+        }
+        .shapes-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+        }
+        .shape-btn {
+            flex: 1;
+            max-width: 130px;
+            background: #ffffff;
+            border: 4px solid #99f6e4;
+            border-radius: 24px;
+            padding: 16px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #5eead4;
+            transition: all 0.15s;
+        }
+        .shape-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #5eead4;
+        }
+        .shape-btn.correct {
+            background: #ccfbf1;
+            border-color: #0f766e;
+        }
+        .shape-btn.wrong {
+            background: #fee2e2;
+            border-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🔷</span>
+            <h1 class="game-title">ต่อบล็อกรูปทรงเรขาคณิต</h1>
+            <span class="title-emoji">⭐</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="shape-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #115e59; margin-bottom: 18px;" id="shape-hint">
+            บล็อกรูปทรงไหน พอดีกับช่องนี้เอ่ย? 🧩
+        </div>
+
+        <div class="slot-box">
+            <div class="slot-target-icon" id="slot-target">⭐</div>
+        </div>
+
+        <div class="shapes-row" id="shapes-row">
+            <!-- ตัวเลือกรูปทรง -->
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">เซียนรูปทรงตัวจริง!</h2>
+            <p class="modal-subtitle">หนูต่อบล็อกรูปทรงเรขาคณิตได้พอดีเป๊ะทุกบล็อกเลย!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const SHAPES = [
+            { id: 'star', e: '⭐', n: 'ดวงดาว' },
+            { id: 'heart', e: '❤️', n: 'หัวใจ' },
+            { id: 'circle', e: '🔴', n: 'วงกลม' },
+            { id: 'square', e: '🟦', n: 'สี่เหลี่ยม' },
+            { id: 'triangle', e: '🔺', n: 'สามเหลี่ยม' }
+        ];
+
+        let currentQ = 0, score = 0, isLocked = false, targetShape = null, choices = [];
+        const slot = document.getElementById('slot-target');
+        const row = document.getElementById('shapes-row');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            slot.className = 'slot-target-icon';
+
+            const shuffled = [...SHAPES].sort(() => 0.5 - Math.random());
+            targetShape = shuffled[0];
+            choices = [targetShape, shuffled[1], shuffled[2]].sort(() => 0.5 - Math.random());
+
+            slot.textContent = targetShape.e;
+
+            row.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'shape-btn';
+                btn.innerHTML = `<span style="font-size:3.5rem;">${c.e}</span><span style="font-size:1.1rem;font-weight:700;color:#0f766e;margin-top:4px;">${c.n}</span>`;
+                btn.addEventListener('click', () => check(idx));
+                row.appendChild(btn);
+            });
+
+            soundManager.speakThai(`บล็อกรูป${targetShape.n}อยู่ตรงไหนเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: ch.e, name: ch.n }))
+                }));
+            }
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const btns = row.children;
+            if (choices[idx].id === targetShape.id) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                slot.classList.add('filled');
+                soundManager.playMatch();
+                soundManager.speakThai(`พอดีเลย! บล็อกรูป${targetShape.n} เก่งมากจ้า!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < 5) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองดูรูปทรงอีกที!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => { currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.body.onclick = () => soundManager.init();
+        loadQuestion();
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>แยกบ้านสัตว์ บก-น้ำ-ฟ้า - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .habitat-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .animal-showcase {
+            font-size: 5.5rem;
+            margin: 15px 0 25px;
+            animation: bounce 2s infinite ease-in-out;
+            transition: transform 0.4s;
+        }
+        .habitats-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .habitat-card {
+            flex: 1;
+            max-width: 160px;
+            border-radius: 26px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.12);
+            transition: all 0.15s;
+            border: 4px solid #ffffff;
+            color: #ffffff;
+        }
+        .habitat-card:active {
+            transform: translateY(4px);
+        }
+        .habitat-icon {
+            font-size: 3.5rem;
+        }
+        .habitat-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-top: 6px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🐬</span>
+            <h1 class="game-title">แยกบ้านสัตว์ บก-น้ำ-ฟ้า</h1>
+            <span class="title-emoji">🦅</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="habitat-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #0369a1;" id="habitat-hint">
+            พาสัตว์น้อยกลับบ้านหน่อยนะ บ้านของตัวนี้อยู่ที่ไหนเอ่ย? 🏡
+        </div>
+
+        <div class="animal-showcase" id="target-animal">🐬</div>
+
+        <div class="habitats-row">
+            <div class="habitat-card" style="background: #16a34a;" onclick="checkHabitat('land')">
+                <span class="habitat-icon">🌲</span>
+                <span class="habitat-title">บนบก</span>
+            </div>
+            <div class="habitat-card" style="background: #0284c7;" onclick="checkHabitat('water')">
+                <span class="habitat-icon">🌊</span>
+                <span class="habitat-title">ในน้ำ</span>
+            </div>
+            <div class="habitat-card" style="background: #0ea5e9;" onclick="checkHabitat('air')">
+                <span class="habitat-icon">☁️</span>
+                <span class="habitat-title">บนฟ้า</span>
+            </div>
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">พาสัตว์กลับบ้านครบแล้ว!</h2>
+            <p class="modal-subtitle">หนูรู้จักที่อยู่อาศัยของสัตว์ทุกตัวเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const ALL_ANIMALS = [
+            // Land
+            { e: '🦁', h: 'land', n: 'พี่สิงโต วิ่งอยู่บนบก' },
+            { e: '🐘', h: 'land', n: 'พี่ช้าง เดินอยู่ในป่าบนบก' },
+            { e: '🦒', h: 'land', n: 'พี่ยีราฟ คอยาวอยู่บนบก' },
+            { e: '🦓', h: 'land', n: 'ม้าลาย วิ่งเล่นบนบก' },
+            { e: '🐻', h: 'land', n: 'พี่หมี อาศัยอยู่บนบก' },
+            { e: '🐵', h: 'land', n: 'ลิงจ๋อ ปีนป่ายต้นไม้บนบก' },
+            { e: '🐅', h: 'land', n: 'พี่เสือ ลายพาดกลอนอยู่บนบก' },
+            { e: '🦌', h: 'land', n: 'กวางน้อย วิ่งอยู่ในป่าบนบก' },
+            { e: '🦘', h: 'land', n: 'จิงโจ้ กระโดดอยู่บนบก' },
+            { e: '🐇', h: 'land', n: 'กระต่ายน้อย อยู่บนพื้นดิน' },
+            // Water
+            { e: '🐬', h: 'water', n: 'โลมาแสนรู้ ว่ายอยู่ในน้ำ' },
+            { e: '🐳', h: 'water', n: 'วาฬตัวใหญ่ พ่นน้ำในทะเล' },
+            { e: '🐙', h: 'water', n: 'หมึกยักษ์ ดำน้ำในท้องทะเล' },
+            { e: '🦈', h: 'water', n: 'ฉลามนักล่า ว่ายอยู่ในมหาสมุทร' },
+            { e: '🐠', h: 'water', n: 'ปลาการ์ตูน แหวกว่ายในน้ำ' },
+            { e: '🦀', h: 'water', n: 'ปูก้ามโต เดินริมหาดในน้ำ' },
+            { e: '🐢', h: 'water', n: 'เต่าทะเล ว่ายน้ำเก่งมาก' },
+            { e: '🦞', h: 'water', n: 'กุ้งมังกร อาศัยใต้ท้องน้ำ' },
+            { e: '🦭', h: 'water', n: 'แมวน้ำ ดำผุดดำว่ายในน้ำ' },
+            { e: '🪼', h: 'water', n: 'แมงกะพรุน ลอยล่องในน้ำใส' },
+            // Air
+            { e: '🦅', h: 'air', n: 'นกอินทรี บินสง่างามบนท้องฟ้า' },
+            { e: '🦜', h: 'air', n: 'นกแก้วสีสดใส บินไปบนฟ้า' },
+            { e: '🦉', h: 'air', n: 'นกฮูก บินในอากาศตอนกลางคืน' },
+            { e: '🦇', h: 'air', n: 'ค้างคาว กางปีกบินบนฟ้า' },
+            { e: '🐝', h: 'air', n: 'ผึ้งน้อย บินตอมดอกไม้ในอากาศ' },
+            { e: '🦋', h: 'air', n: 'ผีเสื้อแสนสวย บินร่อนบนฟ้า' },
+            { e: '🕊️', h: 'air', n: 'นกพิราบ บินร่อนบนท้องฟ้า' },
+            { e: '🦩', h: 'air', n: 'นกฟลามิงโก กางปีกบินบนฟ้า' },
+            { e: '🦆', h: 'air', n: 'เป็ด บินร่อนข้ามท้องฟ้า' },
+            { e: '🦚', h: 'air', n: 'นกยูง บินร่อนข้ามต้นไม้' }
+        ];
+
+        const TOTAL_ROUNDS = 5;
+        let sessionAnimals = [];
+        let currentQ = 0, score = 0, isLocked = false;
+        const animalEl = document.getElementById('target-animal');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') {
+                    const habs = ['land', 'water', 'air'];
+                    if (habs[d.index]) checkHabitat(habs[d.index]);
+                }
+            };
+        } catch(e){}
+
+        function initSession() {
+            sessionAnimals = [...ALL_ANIMALS].sort(() => 0.5 - Math.random()).slice(0, TOTAL_ROUNDS);
+            currentQ = 0;
+            score = 0;
+            scoreEl.textContent = '0';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            const a = sessionAnimals[currentQ];
+            animalEl.textContent = a.e;
+            animalEl.style.transform = 'scale(1)';
+
+            soundManager.speakThai(`บ้านของตัวนี้อยู่ที่ไหนเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: [
+                        { index: 0, emoji: '🌲', name: 'บนบก' },
+                        { index: 1, emoji: '🌊', name: 'ในน้ำ' },
+                        { index: 2, emoji: '☁️', name: 'บนฟ้า' }
+                    ]
+                }));
+            }
+        }
+
+        function checkHabitat(h) {
+            if (isLocked) return;
+            const a = sessionAnimals[currentQ];
+            if (h === a.h) {
+                isLocked = true;
+                animalEl.style.transform = 'translateY(100px) scale(0.2)';
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! ${a.n}!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < TOTAL_ROUNDS) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 1800);
+            } else {
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ สัตว์ตัวนี้ไม่ได้อยู่ที่นี่!");
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = initSession;
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initSession(); };
+        document.body.onclick = () => soundManager.init();
+        initSession();
+    </script>
+</body>
+</html>

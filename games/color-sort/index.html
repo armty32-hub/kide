@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เก็บของใส่ตะกร้าตามสี - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .color-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .item-to-sort {
+            font-size: 5.5rem;
+            margin: 15px 0 25px;
+            animation: float 2s infinite ease-in-out;
+            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.12));
+            transition: transform 0.3s;
+        }
+        .baskets-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .basket-card {
+            flex: 1;
+            max-width: 160px;
+            border-radius: 26px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            transition: all 0.15s;
+            border: 4px solid #ffffff;
+            color: #ffffff;
+        }
+        .basket-card:active {
+            transform: translateY(4px);
+        }
+        .basket-icon {
+            font-size: 3.5rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
+        }
+        .basket-label {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-top: 6px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🧺</span>
+            <h1 class="game-title">เก็บของใส่ตะกร้าตามสี</h1>
+            <span class="title-emoji">🎨</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="color-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #b91c1c;" id="color-hint">
+            ชิ้นนี้เป็นสีอะไรนะ? เก็บใส่ตะกร้าให้ตรงสีเลย! 🍓
+        </div>
+
+        <div class="item-to-sort" id="target-item">🍓</div>
+
+        <div class="baskets-row" id="baskets-row">
+            <div class="basket-card" style="background: #ef4444;" onclick="checkColor('red')">
+                <span class="basket-icon">🧺</span>
+                <span class="basket-label">สีแดง</span>
+            </div>
+            <div class="basket-card" style="background: #eab308;" onclick="checkColor('yellow')">
+                <span class="basket-icon">🧺</span>
+                <span class="basket-label">สีเหลือง</span>
+            </div>
+            <div class="basket-card" style="background: #3b82f6;" onclick="checkColor('blue')">
+                <span class="basket-icon">🧺</span>
+                <span class="basket-label">สีน้ำเงิน</span>
+            </div>
+            <div class="basket-card" style="background: #22c55e;" onclick="checkColor('green')">
+                <span class="basket-icon">🧺</span>
+                <span class="basket-label">สีเขียว</span>
+            </div>
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">แยกสีเก่งมากคนเก่ง!</h2>
+            <p class="modal-subtitle">หนูเก็บของใส่ตะกร้าได้ตรงสีเป๊ะทุกชิ้นเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const ALL_ITEMS = [
+            // Red
+            { e: '🍓', color: 'red', name: 'สตรอว์เบอร์รีสีแดง' },
+            { e: '🍎', color: 'red', name: 'แอปเปิ้ลสีแดง' },
+            { e: '🍅', color: 'red', name: 'มะเขือเทศสีแดง' },
+            { e: '🍒', color: 'red', name: 'เชอร์รีสีแดง' },
+            { e: '🌹', color: 'red', name: 'ดอกกุหลาบสีแดง' },
+            { e: '🦀', color: 'red', name: 'ปูสีแดง' },
+            { e: '🚒', color: 'red', name: 'รถดับเพลิงสีแดง' },
+            { e: '🎈', color: 'red', name: 'ลูกโป่งสีแดง' },
+            { e: '🌶️', color: 'red', name: 'พริกสีแดง' },
+            // Yellow
+            { e: '🍌', color: 'yellow', name: 'กล้วยสีเหลือง' },
+            { e: '🍋', color: 'yellow', name: 'เลมอนสีเหลือง' },
+            { e: '🌽', color: 'yellow', name: 'ข้าวโพดสีเหลือง' },
+            { e: '🌻', color: 'yellow', name: 'ทานตะวันสีเหลือง' },
+            { e: '🐥', color: 'yellow', name: 'ลูกเจี๊ยบสีเหลือง' },
+            { e: '🧀', color: 'yellow', name: 'ชีสสีเหลือง' },
+            { e: '🚕', color: 'yellow', name: 'รถแท็กซี่สีเหลือง' },
+            { e: '🍍', color: 'yellow', name: 'สับปะรดสีเหลือง' },
+            { e: '⭐', color: 'yellow', name: 'ดวงดาวสีเหลือง' },
+            // Blue
+            { e: '🫐', color: 'blue', name: 'บลูเบอร์รีสีน้ำเงิน' },
+            { e: '🚙', color: 'blue', name: 'รถยนต์สีน้ำเงิน' },
+            { e: '🐬', color: 'blue', name: 'ปลาโลมาสีน้ำเงิน' },
+            { e: '🐳', color: 'blue', name: 'ปลาวาฬสีน้ำเงิน' },
+            { e: '🧢', color: 'blue', name: 'หมวกแก๊ปสีน้ำเงิน' },
+            { e: '🪣', color: 'blue', name: 'ถังน้ำสีน้ำเงิน' },
+            { e: '💎', color: 'blue', name: 'เพชรสีฟ้า' },
+            { e: '🪼', color: 'blue', name: 'แมงกะพรุนสีฟ้า' },
+            // Green
+            { e: '🥦', color: 'green', name: 'บรอกโคลีสีเขียว' },
+            { e: '🐸', color: 'green', name: 'กบน้อยสีเขียว' },
+            { e: '🥑', color: 'green', name: 'อะโวคาโดสีเขียว' },
+            { e: '🥒', color: 'green', name: 'แตงกวาสีเขียว' },
+            { e: '🍃', color: 'green', name: 'ใบไม้สีเขียว' },
+            { e: '🐢', color: 'green', name: 'เต่าน้อยสีเขียว' },
+            { e: '🍏', color: 'green', name: 'แอปเปิ้ลเขียว' },
+            { e: '🥝', color: 'green', name: 'กีวีสีเขียว' }
+        ];
+
+        const TOTAL_ROUNDS = 5;
+        let sessionItems = [];
+        let currentQ = 0, score = 0, isLocked = false;
+        const itemEl = document.getElementById('target-item');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') {
+                    const colors = ['red', 'yellow', 'blue', 'green'];
+                    if (colors[d.index]) checkColor(colors[d.index]);
+                }
+            };
+        } catch(e){}
+
+        function initSession() {
+            sessionItems = [...ALL_ITEMS].sort(() => 0.5 - Math.random()).slice(0, TOTAL_ROUNDS);
+            currentQ = 0;
+            score = 0;
+            scoreEl.textContent = '0';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            const it = sessionItems[currentQ];
+            itemEl.textContent = it.e;
+            itemEl.style.transform = 'scale(1)';
+
+            soundManager.speakThai(`ชิ้นนี้สีอะไรเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 4,
+                    matchedPairs: currentQ,
+                    cards: [
+                        { index: 0, emoji: '🔴', name: 'สีแดง' },
+                        { index: 1, emoji: '🟡', name: 'สีเหลือง' },
+                        { index: 2, emoji: '🔵', name: 'สีน้ำเงิน' },
+                        { index: 3, emoji: '🟢', name: 'สีเขียว' }
+                    ]
+                }));
+            }
+        }
+
+        function checkColor(color) {
+            if (isLocked) return;
+            const it = sessionItems[currentQ];
+            if (color === it.color) {
+                isLocked = true;
+                itemEl.style.transform = 'translateY(120px) scale(0.2)';
+                soundManager.playMatch();
+                soundManager.speakThai(`ลงตะกร้าแล้ว! นี่คือ${it.name}!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < TOTAL_ROUNDS) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 1800);
+            } else {
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ สังเกตสีดูอีกที!");
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = initSession;
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initSession(); };
+        document.body.onclick = () => soundManager.init();
+        initSession();
+    </script>
+</body>
+</html>

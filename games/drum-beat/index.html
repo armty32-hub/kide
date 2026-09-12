@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>เคาะกลองตุ้มๆ ตามจังหวะ - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .drum-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .band-audience {
+            display: flex;
+            gap: 20px;
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .dancer {
+            transition: transform 0.1s;
+        }
+        .dancer.bouncing {
+            animation: bounce 0.4s ease;
+        }
+        .drums-row {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .drum-pad {
+            flex: 1;
+            max-width: 180px;
+            height: 200px;
+            border-radius: 50% 50% 45% 45%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 0 rgba(0,0,0,0.18), 0 15px 25px rgba(0,0,0,0.1);
+            border: 6px solid #ffffff;
+            color: #ffffff;
+            transition: transform 0.08s, box-shadow 0.08s;
+            user-select: none;
+        }
+        .drum-pad:active, .drum-pad.hit {
+            transform: translateY(8px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.18);
+        }
+        .drum-icon {
+            font-size: 4.5rem;
+            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.2));
+        }
+        .drum-name {
+            font-size: 1.25rem;
+            font-weight: 900;
+            margin-top: 8px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🥁</span>
+            <h1 class="game-title">เคาะกลองตุ้มๆ ตามจังหวะ</h1>
+            <span class="title-emoji">🎶</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <main class="drum-stage">
+        <div class="band-audience">
+            <span class="dancer" id="d1">🐵</span>
+            <span class="dancer" id="d2">🐻</span>
+            <span class="dancer" id="d3">🐰</span>
+        </div>
+
+        <div style="font-size: 1.3rem; font-weight: 700; color: #ea580c; margin-bottom: 25px;">
+            🎵 แตะตีกลอง ตุ้มๆ โป๊ะๆ สร้างจังหวะดนตรีสนุกๆ เลย!
+        </div>
+
+        <div class="drums-row">
+            <div class="drum-pad" id="drum-0" style="background: linear-gradient(145deg, #ef4444, #dc2626);" onclick="hitDrum(0)">
+                <span class="drum-icon">🥁</span>
+                <span class="drum-name">กลองใหญ่ (ตุ้ม)</span>
+            </div>
+            <div class="drum-pad" id="drum-1" style="background: linear-gradient(145deg, #f59e0b, #d97706);" onclick="hitDrum(1)">
+                <span class="drum-icon">🪘</span>
+                <span class="drum-name">กลองทอม (โป๊ะ)</span>
+            </div>
+            <div class="drum-pad" id="drum-2" style="background: linear-gradient(145deg, #3b82f6, #2563eb);" onclick="hitDrum(2)">
+                <span class="drum-icon">🔔</span>
+                <span class="drum-name">กระดิ่ง (กริ๊ง)</span>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const DRUM_FREQS = [130, 240, 750];
+        const dancers = [document.getElementById('d1'), document.getElementById('d2'), document.getElementById('d3')];
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: 0,
+                    cards: [
+                        { index: 0, emoji: '🥁', name: 'กลองใหญ่' },
+                        { index: 1, emoji: '🪘', name: 'กลองทอม' },
+                        { index: 2, emoji: '🔔', name: 'กระดิ่ง' }
+                    ]
+                }));
+            };
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD' && d.index >= 0 && d.index < 3) hitDrum(d.index);
+            };
+        } catch(e){}
+
+        function hitDrum(idx) {
+            soundManager.init();
+            if (soundManager.ctx) {
+                const ctx = soundManager.ctx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc.type = idx === 2 ? 'triangle' : 'sine';
+                osc.frequency.setValueAtTime(DRUM_FREQS[idx], ctx.currentTime);
+                if (idx < 2) osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.25);
+
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc.start();
+                osc.stop(ctx.currentTime + 0.3);
+            }
+
+            const drumEl = document.getElementById(`drum-${idx}`);
+            if (drumEl) {
+                drumEl.classList.add('hit');
+                setTimeout(() => drumEl.classList.remove('hit'), 150);
+            }
+
+            // แดนเซอร์เต้น
+            const dancer = dancers[idx];
+            if (dancer) {
+                dancer.classList.add('bouncing');
+                setTimeout(() => dancer.classList.remove('bouncing'), 400);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => soundManager.speakThai("ตีกลองตามสบายเลยนะคนเก่ง!");
+        document.body.onclick = () => soundManager.init();
+    </script>
+</body>
+</html>

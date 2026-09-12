@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ผสมสีเวทมนตร์ - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .magic-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .mixer-formula {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0 30px;
+        }
+        .potion-drop {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            color: #ffffff;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+            border: 4px solid #ffffff;
+        }
+        .plus-sign {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #7c3aed;
+        }
+        .potion-result {
+            width: 95px;
+            height: 95px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            border: 4px dashed #a78bfa;
+            background: #f5f3ff;
+            color: #7c3aed;
+            animation: pulse 1.5s infinite;
+        }
+        .choices-row {
+            display: flex;
+            gap: 16px;
+            width: 100%;
+            justify-content: center;
+        }
+        .potion-choice-btn {
+            flex: 1;
+            max-width: 150px;
+            border-radius: 24px;
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            border: 4px solid #ffffff;
+            color: #ffffff;
+            transition: all 0.15s;
+        }
+        .potion-choice-btn:active {
+            transform: translateY(4px);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🧪</span>
+            <h1 class="game-title">ผสมสีเวทมนตร์</h1>
+            <span class="title-emoji">✨</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="magic-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #6d28d9; margin-bottom: 15px;" id="magic-hint">
+            สองสีนี้ผสมกัน จะได้น้ำยาวิเศษสีอะไรเอ่ย? 🧪
+        </div>
+
+        <div class="mixer-formula">
+            <div class="potion-drop" id="color-a" style="background: #ef4444;">🔴</div>
+            <span class="plus-sign">+</span>
+            <div class="potion-drop" id="color-b" style="background: #eab308;">🟡</div>
+            <span class="plus-sign">=</span>
+            <div class="potion-result" id="potion-result">?</div>
+        </div>
+
+        <div class="choices-row" id="choices-row">
+            <!-- 3 ช้อยส์สี -->
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">นักเล่นแร่แปรธาตุน้อย!</h2>
+            <p class="modal-subtitle">หนูผสมแม่สีได้ถูกต้องจนเกิดสีสวยๆ ครบทุกขวดเลย เก่งมาก!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const MIXES = [
+            { a: { c: '#ef4444', e: '🔴', n: 'สีแดง' }, b: { c: '#eab308', e: '🟡', n: 'สีเหลือง' }, ans: { c: '#f97316', e: '🟠', n: 'สีส้ม' }, wrong: [{ c: '#8b5cf6', e: '🟣', n: 'สีม่วง' }, { c: '#10b981', e: '🟢', n: 'สีเขียว' }] },
+            { a: { c: '#3b82f6', e: '🔵', n: 'สีน้ำเงิน' }, b: { c: '#eab308', e: '🟡', n: 'สีเหลือง' }, ans: { c: '#10b981', e: '🟢', n: 'สีเขียว' }, wrong: [{ c: '#f97316', e: '🟠', n: 'สีส้ม' }, { c: '#ec4899', e: '🌸', n: 'สีชมพู' }] },
+            { a: { c: '#ef4444', e: '🔴', n: 'สีแดง' }, b: { c: '#3b82f6', e: '🔵', n: 'สีน้ำเงิน' }, ans: { c: '#8b5cf6', e: '🟣', n: 'สีม่วง' }, wrong: [{ c: '#10b981', e: '🟢', n: 'สีเขียว' }, { c: '#f59e0b', e: '🟡', n: 'สีเหลือง' }] },
+            { a: { c: '#ef4444', e: '🔴', n: 'สีแดง' }, b: { c: '#ffffff', e: '⚪', n: 'สีขาว' }, ans: { c: '#ec4899', e: '🌸', n: 'สีชมพู' }, wrong: [{ c: '#8b5cf6', e: '🟣', n: 'สีม่วง' }, { c: '#3b82f6', e: '🔵', n: 'สีน้ำเงิน' }] },
+            { a: { c: '#3b82f6', e: '🔵', n: 'สีน้ำเงิน' }, b: { c: '#ffffff', e: '⚪', n: 'สีขาว' }, ans: { c: '#38bdf8', e: '🩵', n: 'สีฟ้าอ่อน' }, wrong: [{ c: '#10b981', e: '🟢', n: 'สีเขียว' }, { c: '#f97316', e: '🟠', n: 'สีส้ม' }] }
+        ];
+
+        let currentQ = 0, score = 0, isLocked = false, choices = [];
+        const dropA = document.getElementById('color-a');
+        const dropB = document.getElementById('color-b');
+        const resultEl = document.getElementById('potion-result');
+        const choicesRow = document.getElementById('choices-row');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            const m = MIXES[currentQ];
+
+            dropA.style.background = m.a.c;
+            dropA.textContent = m.a.e;
+            dropB.style.background = m.b.c;
+            dropB.textContent = m.b.e;
+
+            resultEl.style.background = '#f5f3ff';
+            resultEl.textContent = '?';
+            resultEl.style.border = '4px dashed #a78bfa';
+
+            choices = [m.ans, ...m.wrong].sort(() => 0.5 - Math.random());
+            choicesRow.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'potion-choice-btn';
+                btn.style.background = c.c;
+                btn.innerHTML = `<span style="font-size:3rem;">${c.e}</span><span style="font-size:1.1rem;font-weight:700;margin-top:4px;">${c.n}</span>`;
+                btn.addEventListener('click', () => check(idx));
+                choicesRow.appendChild(btn);
+            });
+
+            soundManager.speakThai(`${m.a.n} ผสมกับ ${m.b.n} จะได้สีอะไรเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: ch.e, name: ch.n }))
+                }));
+            }
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const m = MIXES[currentQ];
+            if (choices[idx].n === m.ans.n) {
+                isLocked = true;
+                resultEl.style.background = m.ans.c;
+                resultEl.style.border = '4px solid #ffffff';
+                resultEl.textContent = m.ans.e;
+                soundManager.playMatch();
+                soundManager.speakThai(`ปิ๊ง! ผสมออกมาเป็น${m.ans.n} เก่งมากจ้า!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < MIXES.length) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองคิดดูอีกที!");
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => { currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.body.onclick = () => soundManager.init();
+        loadQuestion();
+    </script>
+</body>
+</html>

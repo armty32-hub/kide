@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>จานสีระบายใจสัตว์น่ารัก - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .color-canvas-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .art-board {
+            width: 320px;
+            height: 320px;
+            background: #ffffff;
+            border: 5px solid #fbcfe8;
+            border-radius: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            margin-bottom: 15px;
+        }
+        .svg-art {
+            width: 280px;
+            height: 280px;
+            cursor: pointer;
+        }
+        .svg-part {
+            fill: #ffffff;
+            stroke: #1e293b;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: fill 0.2s;
+            cursor: pointer;
+        }
+        .palette-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 500px;
+        }
+        .color-dot {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .color-dot:hover, .color-dot.active {
+            transform: scale(1.25);
+            box-shadow: 0 0 12px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🎨</span>
+            <h1 class="game-title">จานสีระบายใจสัตว์น่ารัก</h1>
+            <span class="title-emoji">🖌️</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">ล้างสี</span>
+            </button>
+        </div>
+    </div>
+
+    <main class="color-canvas-stage">
+        <div style="font-size: 1.2rem; font-weight: 700; color: #db2777; margin-bottom: 12px;">
+            แตะเลือกสีด้านล่าง แล้วแตะที่ตัวน้องหมีเพื่อแต้มสีเลย! 🐻✨
+        </div>
+
+        <div class="art-board">
+            <!-- ภาพวาดการ์ตูนหมี SVG แบ่งชิ้นส่วน -->
+            <svg class="svg-art" viewBox="0 0 200 200">
+                <!-- หูซ้าย ขวา -->
+                <circle class="svg-part" cx="50" cy="50" r="30" onclick="paint(this)" />
+                <circle class="svg-part" cx="150" cy="50" r="30" onclick="paint(this)" />
+                <!-- ลำตัว -->
+                <ellipse class="svg-part" cx="100" cy="150" rx="60" ry="45" onclick="paint(this)" />
+                <!-- หัว -->
+                <circle class="svg-part" cx="100" cy="95" r="55" onclick="paint(this)" />
+                <!-- จมูก/ปาก -->
+                <ellipse class="svg-part" cx="100" cy="110" rx="25" ry="18" onclick="paint(this)" />
+                <!-- ตา -->
+                <circle cx="80" cy="85" r="6" fill="#1e293b" />
+                <circle cx="120" cy="85" r="6" fill="#1e293b" />
+                <!-- จมูกดำ -->
+                <ellipse cx="100" cy="105" rx="8" ry="6" fill="#1e293b" />
+            </svg>
+        </div>
+
+        <div class="palette-bar" id="palette-bar">
+            <!-- จุดสีต่างๆ -->
+        </div>
+    </main>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const COLORS = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#38bdf8', '#3b82f6', '#a855f7', '#ec4899', '#854d0e', '#ffffff'];
+        let selectedColor = '#f97316';
+        const palette = document.getElementById('palette-bar');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 5,
+                    matchedPairs: 0,
+                    cards: COLORS.slice(0, 6).map((c, i) => ({ index: i, emoji: '🎨', name: `สีที่ ${i + 1}` }))
+                }));
+            };
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD' && COLORS[d.index]) selectColor(COLORS[d.index]);
+            };
+        } catch(e){}
+
+        function initPalette() {
+            palette.innerHTML = '';
+            COLORS.forEach((c, idx) => {
+                const dot = document.createElement('div');
+                dot.className = `color-dot ${c === selectedColor ? 'active' : ''}`;
+                dot.style.background = c;
+                dot.onclick = () => selectColor(c, dot);
+                palette.appendChild(dot);
+            });
+        }
+
+        function selectColor(c, dot) {
+            selectedColor = c;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            if (dot) dot.classList.add('active');
+            soundManager.playClick();
+        }
+
+        function paint(el) {
+            soundManager.playFlip();
+            el.style.fill = selectedColor;
+        }
+
+        document.getElementById('btn-restart').onclick = () => {
+            document.querySelectorAll('.svg-part').forEach(p => p.style.fill = '#ffffff');
+            soundManager.playClick();
+        };
+
+        document.body.onclick = () => soundManager.init();
+        initPalette();
+    </script>
+</body>
+</html>

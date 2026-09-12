@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ตลาดคำศัพท์ภาษาไทย - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .word-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .picture-box {
+            width: 170px;
+            height: 170px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+            border: 4px solid #f97316;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.2);
+            animation: bounce 2s infinite ease-in-out;
+        }
+        .words-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .word-card-btn {
+            flex: 1;
+            max-width: 180px;
+            background: #ffffff;
+            border: 4px solid #fed7aa;
+            border-radius: 24px;
+            padding: 18px 12px;
+            font-family: inherit;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #9a3412;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #fdba74;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .word-card-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #fdba74;
+        }
+        .word-card-btn.correct {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+        .word-card-btn.wrong {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+        .settings-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 14px 20px;
+            max-width: 680px;
+            width: 100%;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            border: 3px solid #fed7aa;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .setting-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #9a3412;
+            min-width: 120px;
+        }
+        .setting-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .level-chip, .station-chip {
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .level-chip:hover, .station-chip:hover {
+            border-color: #ea580c;
+            color: #ea580c;
+        }
+        .level-chip.active, .station-chip.active {
+            background: #ea580c;
+            color: #ffffff;
+            border-color: #c2410c;
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+            transform: scale(1.03);
+        }
+        .custom-station-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff7ed;
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid #fed7aa;
+        }
+        .custom-station-wrap input[type="range"] {
+            accent-color: #ea580c;
+            cursor: pointer;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e1;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #fb923c, #ea580c);
+            width: 10%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🏷️</span>
+            <div>
+                <h1 class="game-title">ตลาดคำศัพท์ภาษาไทย</h1>
+                <div style="font-size: 1rem; color: #c2410c; font-weight: 700; margin-top: 4px;">คลังคำศัพท์ 86 คำ สุ่มไม่รู้จบ ✨</div>
+            </div>
+            <span class="title-emoji">📖</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แผงตั้งค่าระดับความยากและจำนวนสถานี -->
+    <div class="settings-bar">
+        <div class="setting-group">
+            <span class="setting-title">🎚️ ระดับความยาก:</span>
+            <div class="setting-options">
+                <button class="level-chip" data-level="easy" onclick="changeDifficulty('easy')">🌱 ง่าย (3 ช้อยส์)</button>
+                <button class="level-chip active" data-level="medium" onclick="changeDifficulty('medium')">🌿 ปานกลาง (4 ช้อยส์)</button>
+                <button class="level-chip" data-level="hard" onclick="changeDifficulty('hard')">🔥 ท้าทาย (5 ช้อยส์ หมวดเดียวกัน)</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-title">🚩 จำนวนสถานี:</span>
+            <div class="setting-options">
+                <button class="station-chip" data-stations="5" onclick="changeStations(5)">5 สถานี</button>
+                <button class="station-chip active" data-stations="10" onclick="changeStations(10)">10 สถานี</button>
+                <button class="station-chip" data-stations="20" onclick="changeStations(20)">20 สถานี</button>
+                <button class="station-chip" data-stations="30" onclick="changeStations(30)">30 สถานี</button>
+                <button class="station-chip" data-stations="50" onclick="changeStations(50)">50 สถานี</button>
+                <div class="custom-station-wrap">
+                    <span style="font-size:0.9rem;font-weight:700;color:#9a3412;">เลื่อนปรับเอง:</span>
+                    <input type="range" id="station-slider" min="5" max="50" step="5" value="10" oninput="onStationSlider(this.value)">
+                    <span id="slider-val" style="font-weight:800;color:#c2410c;min-width:32px;">10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">🚩</span>
+            <span>สถานีที่: <strong id="current-q">1</strong> / <span id="total-q">10</span></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🎚️</span>
+            <span>ระดับ: <strong id="current-diff-label">ปานกลาง</strong></span>
+        </div>
+    </div>
+
+    <main class="word-stage">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <div style="font-size: 1.35rem; font-weight: 700; color: #c2410c; margin-bottom: 15px;">
+            ภาพนี้ ตรงกับคำศัพท์คำไหนเอ่ย? 🏷️
+        </div>
+
+        <div class="picture-box" id="picture-box">🐱</div>
+
+        <div class="words-row" id="words-row"></div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">ผ่านครบทุกสถานีแล้วจ้า!</h2>
+            <p class="modal-subtitle">หนูพิชิตตลาดคำศัพท์ครบทั้ง <strong id="modal-stations-final">10</strong> สถานี ได้คะแนน <strong id="modal-score-final" style="color:#ea580c;">0</strong> คะแนน!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div style="display:flex;gap:12px;width:100%;margin-top:15px;flex-wrap:wrap;">
+                <button id="btn-next-level" class="btn-play-again" style="background:#ea580c;flex:1;min-width:180px;">🌟 เล่นต่อด่านถัดไป!</button>
+                <button id="btn-play-again" class="btn-play-again" style="background:#0284c7;flex:1;min-width:180px;">🔄 เริ่มสถานีใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const ALL_VOCAB = [
+            // สัตว์น่ารัก (24 คำ)
+            { art: '🐱', word: 'แมว' },
+            { art: '🐶', word: 'หมา' },
+            { art: '🐟', word: 'ปลา' },
+            { art: '🐘', word: 'ช้าง' },
+            { art: '🦁', word: 'สิงโต' },
+            { art: '🐰', word: 'กระต่าย' },
+            { art: '🐔', word: 'ไก่' },
+            { art: '🦆', word: 'เป็ด' },
+            { art: '🐸', word: 'กบ' },
+            { art: '🐴', word: 'ม้า' },
+            { art: '🐮', word: 'วัว' },
+            { art: '🐷', word: 'หมู' },
+            { art: '🐵', word: 'ลิง' },
+            { art: '🐻', word: 'หมี' },
+            { art: '🐯', word: 'เสือ' },
+            { art: '🐦', word: 'นก' },
+            { art: '🦉', word: 'นกฮูก' },
+            { art: '🐢', word: 'เต่า' },
+            { art: '🐊', word: 'จระเข้' },
+            { art: '🦋', word: 'ผีเสื้อ' },
+            { art: '🐝', word: 'ผึ้ง' },
+            { art: '🦀', word: 'ปู' },
+            { art: '🐬', word: 'โลมา' },
+            { art: '🐳', word: 'วาฬ' },
+
+            // ผลไม้และของกิน (18 คำ)
+            { art: '🍎', word: 'แอปเปิ้ล' },
+            { art: '🍌', word: 'กล้วย' },
+            { art: '🍊', word: 'ส้ม' },
+            { art: '🍉', word: 'แตงโม' },
+            { art: '🍇', word: 'องุ่น' },
+            { art: '🍓', word: 'สตรอว์เบอร์รี' },
+            { art: '🍍', word: 'สับปะรด' },
+            { art: '🥭', word: 'มะม่วง' },
+            { art: '🌽', word: 'ข้าวโพด' },
+            { art: '🥕', word: 'แครอท' },
+            { art: '🍚', word: 'ข้าว' },
+            { art: '🥛', word: 'นมสด' },
+            { art: '🍞', word: 'ขนมปัง' },
+            { art: '🥚', word: 'ไข่ไก่' },
+            { art: '🍦', word: 'ไอศกรีม' },
+            { art: '🍰', word: 'เค้ก' },
+            { art: '🍯', word: 'น้ำผึ้ง' },
+            { art: '🧀', word: 'ชีส' },
+
+            // ยานพาหนะ (10 คำ)
+            { art: '🚗', word: 'รถยนต์' },
+            { art: '🚂', word: 'รถไฟ' },
+            { art: '🚢', word: 'เรือ' },
+            { art: '✈️', word: 'เครื่องบิน' },
+            { art: '🚌', word: 'รถเมล์' },
+            { art: '🚲', word: 'จักรยาน' },
+            { art: '🚁', word: 'เฮลิคอปเตอร์' },
+            { art: '🚑', word: 'รถพยาบาล' },
+            { art: '🚒', word: 'รถดับเพลิง' },
+            { art: '⛵', word: 'เรือใบ' },
+
+            // ธรรมชาติและสถานที่ (12 คำ)
+            { art: '🏠', word: 'บ้าน' },
+            { art: '🏫', word: 'โรงเรียน' },
+            { art: '🌸', word: 'ดอกไม้' },
+            { art: '🌳', word: 'ต้นไม้' },
+            { art: '☀️', word: 'ดวงอาทิตย์' },
+            { art: '🌙', word: 'พระจันทร์' },
+            { art: '⭐', word: 'ดวงดาว' },
+            { art: '🌈', word: 'สายรุ้ง' },
+            { art: '☁️', word: 'ก้อนเมฆ' },
+            { art: '🌧️', word: 'ฝนตก' },
+            { art: '⛰️', word: 'ภูเขา' },
+            { art: '🌊', word: 'ทะเล' },
+
+            // ร่างกายและเครื่องแต่งกาย (12 คำ)
+            { art: '👁️', word: 'ตา' },
+            { art: '👂', word: 'หู' },
+            { art: '👃', word: 'จมูก' },
+            { art: '👄', word: 'ปาก' },
+            { art: '✋', word: 'มือ' },
+            { art: '🦶', word: 'เท้า' },
+            { art: '🧢', word: 'หมวก' },
+            { art: '👕', word: 'เสื้อ' },
+            { art: '👖', word: 'กางเกง' },
+            { art: '👟', word: 'รองเท้า' },
+
+            // สิ่งของเครื่องใช้ (10 คำ)
+            { art: '📚', word: 'หนังสือ' },
+            { art: '✏️', word: 'ดินสอ' },
+            { art: '⚽', word: 'ลูกฟุตบอล' },
+            { art: '🎈', word: 'ลูกโป่ง' },
+            { art: '🎁', word: 'ของขวัญ' },
+            { art: '⏰', word: 'นาฬิกา' },
+            { art: '☂️', word: 'ร่ม' },
+            { art: '🪑', word: 'เก้าอี้' },
+            { art: '🛏️', word: 'เตียงนอน' },
+            { art: '🧸', word: 'ตุ๊กตา' }
+        ];
+
+        let currentDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+        let totalStations = 10; // 5 - 50
+        let sessionVocab = [];
+        let currentQ = 0, score = 0, isLocked = false, choices = [];
+
+        const picBox = document.getElementById('picture-box');
+        const wordsRow = document.getElementById('words-row');
+        const qEl = document.getElementById('current-q');
+        const totalQEl = document.getElementById('total-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+        const progressFill = document.getElementById('progress-bar-fill');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function changeDifficulty(level) {
+            currentDifficulty = level;
+            document.querySelectorAll('.level-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.level === level);
+            });
+            const labels = { easy: 'ง่าย 🌱', medium: 'ปานกลาง 🌿', hard: 'ท้าทาย 🔥' };
+            document.getElementById('current-diff-label').textContent = labels[level] || 'ปานกลาง';
+            initSession(true);
+        }
+
+        function changeStations(num) {
+            totalStations = parseInt(num, 10);
+            document.getElementById('station-slider').value = totalStations;
+            document.getElementById('slider-val').textContent = totalStations;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            initSession(true);
+        }
+
+        function onStationSlider(val) {
+            totalStations = parseInt(val, 10);
+            document.getElementById('slider-val').textContent = totalStations;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            initSession(true);
+        }
+
+        function updateProgressBar() {
+            if (progressFill) {
+                const percent = Math.min(100, Math.round(((currentQ) / totalStations) * 100));
+                progressFill.style.width = `${percent}%`;
+            }
+        }
+
+        function initSession(resetScore = true) {
+            let shuffled = [];
+            while (shuffled.length < totalStations) {
+                shuffled = shuffled.concat([...ALL_VOCAB].sort(() => 0.5 - Math.random()));
+            }
+            sessionVocab = shuffled.slice(0, totalStations);
+
+            currentQ = 0;
+            if (resetScore) {
+                score = 0;
+                scoreEl.textContent = '0';
+            }
+            if (totalQEl) totalQEl.textContent = totalStations;
+            updateProgressBar();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            totalQEl.textContent = totalStations;
+            updateProgressBar();
+
+            const item = sessionVocab[currentQ];
+            picBox.textContent = item.art;
+
+            let distractorCount = 3; // default medium: 4 choices
+            if (currentDifficulty === 'easy') distractorCount = 2; // 3 choices
+            else if (currentDifficulty === 'hard') distractorCount = 4; // 5 choices
+
+            const wrongWords = ALL_VOCAB
+                .filter(v => v.word !== item.word)
+                .map(v => v.word)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, distractorCount);
+
+            choices = [item.word, ...wrongWords].sort(() => 0.5 - Math.random());
+
+            wordsRow.innerHTML = '';
+            choices.forEach((w, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'word-card-btn';
+                btn.textContent = w;
+                btn.addEventListener('click', () => check(idx));
+                wordsRow.appendChild(btn);
+            });
+
+            soundManager.speakThai(`ภาพนี้ตรงกับคำไหนเอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: choices.length,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: '🏷️', name: ch }))
+                }));
+            }
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const item = sessionVocab[currentQ];
+            const btns = wordsRow.children;
+            if (choices[idx] === item.word) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! คำนี้อ่านว่า "${item.word}"! เก่งมาก!`);
+                const bonus = currentDifficulty === 'hard' ? 20 : (currentDifficulty === 'medium' ? 15 : 10);
+                score += bonus;
+                scoreEl.textContent = score;
+
+                setTimeout(() => {
+                    currentQ++;
+                    updateProgressBar();
+                    if (currentQ < totalStations) {
+                        loadQuestion();
+                    } else {
+                        soundManager.playWin();
+                        document.getElementById('modal-stations-final').textContent = totalStations;
+                        document.getElementById('modal-score-final').textContent = score;
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 1900);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองอ่านดูอีกที!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => initSession(true);
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initSession(true); };
+        document.getElementById('btn-next-level').onclick = () => { modal.classList.remove('active'); initSession(false); };
+        document.body.onclick = () => soundManager.init();
+        initSession(true);
+    </script>
+</body>
+</html>

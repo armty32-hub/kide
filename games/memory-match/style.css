@@ -1,0 +1,601 @@
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@400;600;700&family=Nunito:wght@700;900&display=swap');
+
+:root {
+    --bg-gradient: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #fed6e3 100%);
+    --card-bg-back: linear-gradient(145deg, #ff9a9e 0%, #fecfef 99%);
+    --card-bg-front: #ffffff;
+    --primary-color: #ff6b81;
+    --secondary-color: #70a1ff;
+    --accent-green: #2ed573;
+    --accent-yellow: #ffa502;
+    --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --shadow-card: 0 8px 16px rgba(0, 0, 0, 0.12);
+    --shadow-button: 0 6px 0 rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+body {
+    font-family: 'Mitr', 'Nunito', sans-serif;
+    min-height: 100vh;
+    background: var(--bg-gradient);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 15px;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* หัวข้อและแบนเนอร์ */
+.header {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.title-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 8px 24px;
+    border-radius: 50px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(8px);
+}
+
+.game-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ff4757;
+    text-shadow: 2px 2px 0px #fff, 3px 3px 0px rgba(0,0,0,0.08);
+}
+
+.title-emoji {
+    font-size: 2rem;
+    animation: wiggle 2s infinite ease-in-out;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+}
+
+/* แถบควบคุมและเลือกระดับ */
+.controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    max-width: 850px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.level-selector {
+    display: flex;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 5px;
+    border-radius: 40px;
+    box-shadow: var(--shadow-soft);
+}
+
+.btn-level {
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 30px;
+    background: transparent;
+    color: #57606f;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.btn-level.active {
+    background: var(--primary-color);
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(255, 107, 129, 0.4);
+    transform: scale(1.05);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn-icon {
+    font-family: inherit;
+    font-size: 1.1rem;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 25px;
+    background: #ffffff;
+    color: #2f3542;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover, .btn-level:hover:not(.active) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+}
+
+.btn-icon:active, .btn-level:active {
+    transform: translateY(1px);
+}
+
+/* ปุ่มต่อจอยมือถือพิเศษ */
+.btn-phone {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.btn-phone:hover {
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.45);
+}
+
+/* แถบสถานะความคืบหน้า (Progress) */
+.status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 650px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 25px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-soft);
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2f3542;
+}
+
+.status-icon {
+    font-size: 1.4rem;
+}
+
+/* Phone Connection Badge */
+.phone-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    color: #475569;
+}
+
+.phone-badge .dot-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.phone-badge.connected {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.phone-badge.connected .dot-status {
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+}
+
+/* ตารางกระดานเกม (Grid) */
+.board-container {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    justify-content: center;
+    padding: 5px;
+}
+
+.board {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+    perspective: 1200px;
+}
+
+/* Grid Layouts ตามระดับ */
+.board.grid-easy {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 480px;
+}
+
+.board.grid-medium {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 620px;
+}
+
+.board.grid-hard {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 660px;
+}
+
+/* การ์ดและเอฟเฟกต์ 3D Flip */
+.card {
+    aspect-ratio: 1 / 1.15;
+    cursor: pointer;
+    position: relative;
+    border-radius: 20px;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+}
+
+.card.flipped .card-inner,
+.card.matched .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #ffffff;
+}
+
+/* ตัวเลขกำกับการ์ด (1, 2, 3...) */
+.card-badge-num {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.9);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+}
+
+/* ด้านหลังการ์ด (ตอนคว่ำ) */
+.card-back {
+    background: var(--card-bg-back);
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.6);
+}
+
+.card-back-icon {
+    font-size: 2.8rem;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+    animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+/* ด้านหน้าการ์ด (ตอนหงาย) */
+.card-front {
+    background: var(--card-bg-front);
+    transform: rotateY(180deg);
+    padding: 8px;
+}
+
+.card-emoji {
+    font-size: 3.2rem;
+    line-height: 1.1;
+    filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.08));
+}
+
+.card-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2f3542;
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* สถานะจับคู่สำเร็จ */
+.card.matched .card-inner {
+    animation: matchCelebrate 0.6s ease;
+}
+
+.card.matched .card-front {
+    border-color: #2ed573;
+    background: #f0fff4;
+}
+
+@keyframes matchCelebrate {
+    0% { transform: rotateY(180deg) scale(1); }
+    40% { transform: rotateY(180deg) scale(1.15); }
+    100% { transform: rotateY(180deg) scale(1); }
+}
+
+/* หน้าต่างป๊อปอัป (Modal Overlay ทั่วไป) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-content {
+    background: #ffffff;
+    border-radius: 32px;
+    padding: 35px 25px;
+    text-align: center;
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    border: 6px solid #ffeaa7;
+    transform: scale(0.7);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+}
+
+.modal-overlay.active .modal-content {
+    transform: scale(1);
+}
+
+/* ป๊อปอัป QR Code ต่อมือถือ */
+.qr-content {
+    border-color: #c7d2fe;
+    max-width: 480px;
+}
+
+.btn-close-modal {
+    position: absolute;
+    top: 15px;
+    right: 18px;
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: #64748b;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.btn-close-modal:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.qr-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.qr-icon {
+    font-size: 2rem;
+}
+
+.qr-desc {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+}
+
+.qr-image-container {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 12px;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.qr-image-container img {
+    display: block;
+    width: 220px;
+    height: 220px;
+    border-radius: 8px;
+}
+
+.qr-loading {
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.qr-url-box {
+    background: #f1f5f9;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    word-break: break-all;
+}
+
+.url-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.url-link {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #4f46e5;
+    text-decoration: underline;
+}
+
+.qr-tips {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    text-align: left;
+    line-height: 1.4;
+}
+
+/* ป๊อปอัปฉลองชัยชนะ (Victory Modal) */
+.modal-trophy {
+    font-size: 4.5rem;
+    animation: bounce 1.2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.modal-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ff4757;
+    margin: 10px 0;
+}
+
+.modal-subtitle {
+    font-size: 1.25rem;
+    color: #2ed573;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.modal-stars {
+    font-size: 2.5rem;
+    letter-spacing: 6px;
+    margin-bottom: 25px;
+}
+
+.btn-play-again {
+    font-family: inherit;
+    font-size: 1.3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #2ed573 0%, #1abc9c 100%);
+    color: #ffffff;
+    border: none;
+    padding: 14px 36px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(46, 213, 115, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-play-again:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 12px 25px rgba(46, 213, 115, 0.5);
+}
+
+.btn-play-again:active {
+    transform: translateY(1px);
+}
+
+/* Canvas สำหรับพลุกระดาษ Confetti */
+#confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Responsive ปรับตามขนาดจอ */
+@media (max-width: 600px) {
+    .game-title {
+        font-size: 1.45rem;
+    }
+    .status-bar {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .btn-level {
+        padding: 6px 12px;
+        font-size: 0.88rem;
+    }
+    .btn-icon {
+        padding: 8px 12px;
+        font-size: 1rem;
+    }
+    .board {
+        gap: 8px;
+    }
+    .card-face {
+        border-width: 3px;
+        border-radius: 16px;
+    }
+    .card-inner {
+        border-radius: 16px;
+    }
+    .card-back-icon {
+        font-size: 2rem;
+    }
+    .card-emoji {
+        font-size: 2.3rem;
+    }
+    .card-label {
+        font-size: 0.85rem;
+    }
+}

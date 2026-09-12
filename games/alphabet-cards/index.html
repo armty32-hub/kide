@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>บัตรคำศัพท์ ก-ไก่ 44 ตัว & เกมทายพยัญชนะ - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        .stage-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .mode-btn {
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 10px 22px;
+            border-radius: 25px;
+            border: none;
+            background: #e2e8f0;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background: #0d9488;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
+        }
+
+        /* Quiz Mode */
+        .quiz-view {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .quiz-card {
+            background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
+            border: 4px solid #14b8a6;
+            border-radius: 28px;
+            padding: 20px 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: inset 0 0 15px rgba(20, 184, 166, 0.15);
+        }
+        .target-art {
+            font-size: 5rem;
+            line-height: 1.1;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.12));
+            animation: bounce 2s infinite ease-in-out;
+        }
+        .target-prompt {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #115e59;
+        }
+        .target-hint {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #0f766e;
+            margin-top: 4px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+        .opt-btn {
+            font-family: inherit;
+            font-size: 2.2rem;
+            font-weight: 800;
+            padding: 16px;
+            border-radius: 24px;
+            border: 4px solid #cbd5e1;
+            background: #ffffff;
+            color: #1e293b;
+            cursor: pointer;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .opt-btn .opt-sub {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .opt-btn:active {
+            transform: scale(0.96);
+        }
+        .opt-btn.correct {
+            background: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #15803d !important;
+            transform: scale(1.05);
+        }
+        .opt-btn.wrong {
+            background: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #b91c1c !important;
+            animation: shake 0.4s ease;
+        }
+
+        /* Explore Mode */
+        .explore-view {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .card-main {
+            width: 260px;
+            height: 330px;
+            background: linear-gradient(145deg, #ffffff, #f0fdfa);
+            border: 6px solid #0d9488;
+            border-radius: 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 25px rgba(13, 148, 136, 0.25);
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .card-main:hover {
+            transform: scale(1.03);
+        }
+        .card-letter {
+            font-size: 5rem;
+            font-weight: 900;
+            color: #0f766e;
+            line-height: 1;
+        }
+        .card-emoji {
+            font-size: 5.5rem;
+            margin: 6px 0;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.12));
+        }
+        .card-word {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1e293b;
+            text-align: center;
+            padding: 0 10px;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .nav-btn {
+            font-family: inherit;
+            font-size: 1.15rem;
+            font-weight: 700;
+            padding: 10px 22px;
+            border-radius: 30px;
+            border: none;
+            background: #0d9488;
+            color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+            transition: transform 0.15s;
+        }
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        .letter-grid-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            max-width: 600px;
+            max-height: 160px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 20px;
+            border: 2px solid #e2e8f0;
+        }
+        .letter-chip {
+            width: 42px;
+            height: 42px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            border-radius: 12px;
+            border: 2px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .letter-chip.active {
+            background: #0d9488;
+            color: #ffffff;
+            border-color: #0f766e;
+            transform: scale(1.1);
+        }
+
+        /* Continuous modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 36px;
+            padding: 35px 30px;
+            text-align: center;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border: 5px solid #2dd4bf;
+        }
+        .modal-btn-next {
+            font-family: inherit;
+            font-size: 1.35rem;
+            font-weight: 800;
+            padding: 14px 28px;
+            border-radius: 35px;
+            border: none;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+            margin-top: 20px;
+            width: 100%;
+            transition: transform 0.15s;
+        }
+        .modal-btn-next:active {
+            transform: scale(0.96);
+        }
+        .modal-btn-home {
+            font-family: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .settings-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 14px 20px;
+            max-width: 720px;
+            width: 100%;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            border: 3px solid #99f6e4;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .setting-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0f766e;
+            min-width: 120px;
+        }
+        .setting-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .level-chip, .station-chip {
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .level-chip:hover, .station-chip:hover {
+            border-color: #0d9488;
+            color: #0d9488;
+        }
+        .level-chip.active, .station-chip.active {
+            background: #0d9488;
+            color: #ffffff;
+            border-color: #0f766e;
+            box-shadow: 0 4px 10px rgba(13, 148, 136, 0.3);
+            transform: scale(1.03);
+        }
+        .custom-station-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0fdfa;
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid #99f6e4;
+        }
+        .custom-station-wrap input[type="range"] {
+            accent-color: #0d9488;
+            cursor: pointer;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e1;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2dd4bf, #0d9488);
+            width: 10%;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🔤</span>
+            <h1 class="game-title">บัตรคำศัพท์ ก-ไก่ 44 ตัว & ทายพยัญชนะ</h1>
+            <span class="title-emoji">📖</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-sound-replay" class="btn-icon" title="ฟังเสียงโจทย์อีกครั้ง">
+                <span>📢</span> <span class="btn-text">ฟังโจทย์</span>
+            </button>
+            <button id="btn-restart" class="btn-icon" title="เริ่มรอบใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แผงตั้งค่าระดับความยากและจำนวนสถานี (เฉพาะโหมดทายพยัญชนะ) -->
+    <div class="settings-bar" id="settings-bar">
+        <div class="setting-group">
+            <span class="setting-title">🎚️ ระดับความยาก:</span>
+            <div class="setting-options">
+                <button class="level-chip" data-level="easy" onclick="changeDifficulty('easy')">🌱 ง่าย (2 ช้อยส์)</button>
+                <button class="level-chip active" data-level="medium" onclick="changeDifficulty('medium')">🌿 ปานกลาง (4 ช้อยส์)</button>
+                <button class="level-chip" data-level="hard" onclick="changeDifficulty('hard')">🔥 ท้าทาย (6 ช้อยส์)</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-title">🚩 จำนวนสถานี:</span>
+            <div class="setting-options">
+                <button class="station-chip" data-stations="5" onclick="changeStations(5)">5 สถานี</button>
+                <button class="station-chip active" data-stations="10" onclick="changeStations(10)">10 สถานี</button>
+                <button class="station-chip" data-stations="20" onclick="changeStations(20)">20 สถานี</button>
+                <button class="station-chip" data-stations="30" onclick="changeStations(30)">30 สถานี</button>
+                <button class="station-chip" data-stations="50" onclick="changeStations(50)">50 สถานี</button>
+                <div class="custom-station-wrap">
+                    <span style="font-size:0.9rem;font-weight:700;color:#0f766e;">เลื่อนปรับเอง:</span>
+                    <input type="range" id="station-slider" min="5" max="50" step="5" value="10" oninput="onStationSlider(this.value)">
+                    <span id="slider-val" style="font-weight:800;color:#0d9488;min-width:32px;">10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-container">
+        <div class="stats-panel" id="stats-panel">
+            <div class="stat-item"><span class="stat-label">คะแนน:</span> <span id="score-val" class="stat-value">0</span></div>
+            <div class="stat-item"><span class="stat-label">สถานีที่:</span> <span id="round-val" class="stat-value">1 / 10</span></div>
+            <div class="stat-item"><span class="stat-label">ต่อเนื่อง:</span> <span id="streak-val" class="stat-value">🔥 0</span></div>
+            <div class="stat-item"><span class="stat-label">ระดับ:</span> <span id="diff-val" class="stat-value">ปานกลาง</span></div>
+        </div>
+    </div>
+
+    <main class="stage-container">
+        <div class="mode-tabs">
+            <button class="mode-btn active" id="tab-quiz" onclick="setMode('quiz')">🎯 โหมดเกมทายพยัญชนะ</button>
+            <button class="mode-btn" id="tab-explore" onclick="setMode('explore')">📖 โหมดการ์ดอ่านออกเสียง (ก-ฮ ครบ)</button>
+        </div>
+
+        <!-- Mode 1: Interactive Quiz -->
+        <div class="quiz-view" id="quiz-view">
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+
+            <div class="quiz-card">
+                <div class="target-art" id="target-art">🐔</div>
+                <div class="target-prompt" id="target-prompt">ตัวไหนคือ ก.ไก่ เอ่ย?</div>
+                <div class="target-hint" id="target-hint">แตะเลือกตัวพยัญชนะที่ถูกต้องนะจ๊ะ</div>
+            </div>
+
+            <div class="options-grid" id="options-grid"></div>
+        </div>
+
+        <!-- Mode 2: Flashcard Explorer -->
+        <div class="explore-view" id="explore-view" style="display: none;">
+            <div style="font-size: 1.15rem; font-weight: 700; color: #0d9488; margin-bottom: 12px;">
+                แตะที่บัตรคำเพื่อฟังเสียงอ่านออกเสียง 📢
+            </div>
+
+            <div class="card-main" id="flashcard" onclick="speakExploreCard()">
+                <div class="card-letter" id="card-letter">ก</div>
+                <div class="card-emoji" id="card-emoji">🐔</div>
+                <div class="card-word" id="card-word">ก เอ๋ย ก ไก่</div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevExplore()">⬅️ ก่อนหน้า</button>
+                <span style="font-size:1.2rem; font-weight:800; color:#0f766e;" id="card-index">1 / 44</span>
+                <button class="nav-btn" onclick="nextExplore()">ถัดไป ➡️</button>
+            </div>
+
+            <div class="letter-grid-selector" id="letter-grid"></div>
+        </div>
+    </main>
+
+    <!-- Victory Modal with Continuous Play -->
+    <div class="modal-overlay" id="victory-modal" style="display: none;">
+        <div class="modal-card">
+            <div style="font-size: 5rem; margin-bottom: 10px;">🌟🏆🎉</div>
+            <h2 style="font-size: 2rem; color: #0f766e; margin-bottom: 10px;">เก่งกาจมากเลยคนเก่ง!</h2>
+            <p style="font-size: 1.3rem; color: #334155; margin-bottom: 15px;" id="victory-msg">ยอดเยี่ยมมาก ตอบถูกครบ 10 ข้อ!</p>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #e11d48; margin-bottom: 15px;">
+                คะแนนรวม: <span id="modal-score">0</span> คะแนน!
+            </div>
+            <button class="modal-btn-next" onclick="nextLevel()">🌟 เล่นต่อด่านถัดไป! (สุ่มโจทย์ใหม่)</button>
+            <button class="modal-btn-home" onclick="location.href='/'">🏠 กลับหน้าหลัก</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const THAI_ALPHABET = [
+            { l: 'ก', name: 'ก ไก่', rhyme: 'ก เอ๋ย ก ไก่', e: '🐔' },
+            { l: 'ข', name: 'ข ไข่', rhyme: 'ข ไข่ ในเล้า', e: '🥚' },
+            { l: 'ฃ', name: 'ฃ ขวด', rhyme: 'ฃ ขวด ของเรา', e: '🍶' },
+            { l: 'ค', name: 'ค ควาย', rhyme: 'ค ควาย เข้านา', e: '🐃' },
+            { l: 'ฅ', name: 'ฅ คน', rhyme: 'ฅ คน ขึงขัง', e: '👨' },
+            { l: 'ฆ', name: 'ฆ ระฆัง', rhyme: 'ฆ ระฆัง ข้างฝา', e: '🔔' },
+            { l: 'ง', name: 'ง งู', rhyme: 'ง งู ใจกล้า', e: '🐍' },
+            { l: 'จ', name: 'จ จาน', rhyme: 'จ จาน ใช้ดี', e: '🍽️' },
+            { l: 'ฉ', name: 'ฉ ฉิ่ง', rhyme: 'ฉ ฉิ่ง ตีดัง', e: '🎶' },
+            { l: 'ช', name: 'ช ช้าง', rhyme: 'ช ช้าง วิ่งหนี', e: '🐘' },
+            { l: 'ซ', name: 'ซ โซ่', rhyme: 'ซ โซ่ ล่ามที', e: '⛓️' },
+            { l: 'ฌ', name: 'ฌ เฌอ', rhyme: 'ฌ เฌอ คู่กัน', e: '🌳' },
+            { l: 'ญ', name: 'ญ หญิง', rhyme: 'ญ หญิง โสภา', e: '👧' },
+            { l: 'ฎ', name: 'ฎ ชฎา', rhyme: 'ฎ ชฎา สวมพลัน', e: '👑' },
+            { l: 'ฏ', name: 'ฏ ปฏัก', rhyme: 'ฏ ปฏัก หุนหัน', e: '🦯' },
+            { l: 'ฐ', name: 'ฐ ฐาน', rhyme: 'ฐ ฐาน เข้ามารอง', e: '🏛️' },
+            { l: 'ฑ', name: 'ฑ มณโฑ', rhyme: 'ฑ มณโฑ หน้าขาว', e: '👸' },
+            { l: 'ฒ', name: 'ฒ ผู้เฒ่า', rhyme: 'ฒ ผู้เฒ่า เดินย่อง', e: '👴' },
+            { l: 'ณ', name: 'ณ เณร', rhyme: 'ณ เณร ไม่มอง', e: '🧘' },
+            { l: 'ด', name: 'ด เด็ก', rhyme: 'ด เด็ก ต้องนิมนต์', e: '🧒' },
+            { l: 'ต', name: 'ต เต่า', rhyme: 'ต เต่า หลังตุง', e: '🐢' },
+            { l: 'ถ', name: 'ถ ถุง', rhyme: 'ถ ถุง แบกขน', e: '🛍️' },
+            { l: 'ท', name: 'ท ทหาร', rhyme: 'ท ทหาร อดทน', e: '💂' },
+            { l: 'ธ', name: 'ธ ธง', rhyme: 'ธ ธง คนนิยม', e: '🇹🇭' },
+            { l: 'น', name: 'น หนู', rhyme: 'น หนู ขวักไขว่', e: '🐁' },
+            { l: 'บ', name: 'บ ใบไม้', rhyme: 'บ ใบไม้ ทับถม', e: '🍃' },
+            { l: 'ป', name: 'ป ปลา', rhyme: 'ป ปลา ตากลม', e: '🐟' },
+            { l: 'ผ', name: 'ผ ผึ้ง', rhyme: 'ผ ผึ้ง ทำรัง', e: '🐝' },
+            { l: 'ฝ', name: 'ฝ ฝา', rhyme: 'ฝ ฝา ทนทาน', e: '🥣' },
+            { l: 'พ', name: 'พ พาน', rhyme: 'พ พาน วางตั้ง', e: '🏆' },
+            { l: 'ฟ', name: 'ฟ ฟัน', rhyme: 'ฟ ฟัน สะอาดจัง', e: '🦷' },
+            { l: 'ภ', name: 'ภ สำเภา', rhyme: 'ภ สำเภา กางใบ', e: '⛵' },
+            { l: 'ม', name: 'ม ม้า', rhyme: 'ม ม้า คึกคัก', e: '🐎' },
+            { l: 'ย', name: 'ย ยักษ์', rhyme: 'ย ยักษ์ เขี้ยวใหญ่', e: '👹' },
+            { l: 'ร', name: 'ร เรือ', rhyme: 'ร เรือ พายไป', e: '🚢' },
+            { l: 'ล', name: 'ล ลิง', rhyme: 'ล ลิง ไต่ราว', e: '🐒' },
+            { l: 'ว', name: 'ว แหวน', rhyme: 'ว แหวน ลงยา', e: '💍' },
+            { l: 'ศ', name: 'ศ ศาลา', rhyme: 'ศ ศาลา เงียบเหงา', e: '🛖' },
+            { l: 'ษ', name: 'ษ ฤๅษี', rhyme: 'ษ ฤๅษี หนวดยาว', e: '🧙' },
+            { l: 'ส', name: 'ส เสือ', rhyme: 'ส เสือ ดาวคะนอง', e: '🐯' },
+            { l: 'ห', name: 'ห หีบ', rhyme: 'ห หีบ ใส่ผ้า', e: '📦' },
+            { l: 'ฬ', name: 'ฬ จุฬา', rhyme: 'ฬ จุฬา ท่าผยอง', e: '🪁' },
+            { l: 'อ', name: 'อ อ่าง', rhyme: 'อ อ่าง เนืองนอง', e: '🥣' },
+            { l: 'ฮ', name: 'ฮ นกฮูก', rhyme: 'ฮ นกฮูก ตาโต', e: '🦉' }
+        ];
+
+        let currentDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+        let totalStations = 10; // 5 - 50
+        let currentMode = 'quiz';
+        let currentRound = 1;
+        let score = 0;
+        let streak = 0;
+        let currentTarget = null;
+        let currentOptions = [];
+        let canAnswer = true;
+        let exploreIdx = 0;
+
+        const targetArt = document.getElementById('target-art');
+        const targetPrompt = document.getElementById('target-prompt');
+        const targetHint = document.getElementById('target-hint');
+        const optionsGrid = document.getElementById('options-grid');
+        const scoreVal = document.getElementById('score-val');
+        const roundVal = document.getElementById('round-val');
+        const streakVal = document.getElementById('streak-val');
+        const victoryModal = document.getElementById('victory-modal');
+        const progressFill = document.getElementById('progress-bar-fill');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+                syncPhone();
+            };
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') {
+                    if (currentMode === 'quiz') {
+                        if (canAnswer && d.index >= 0 && d.index < currentOptions.length) {
+                            handleAnswer(currentOptions[d.index], d.index);
+                        }
+                    } else {
+                        if (d.index === 0) prevExplore();
+                        else if (d.index === 1) speakExploreCard();
+                        else if (d.index === 2) nextExplore();
+                    }
+                }
+            };
+        } catch(e){}
+
+        function changeDifficulty(level) {
+            currentDifficulty = level;
+            document.querySelectorAll('.level-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.level === level);
+            });
+            const labels = { easy: 'ง่าย 🌱', medium: 'ปานกลาง 🌿', hard: 'ท้าทาย 🔥' };
+            const diffEl = document.getElementById('diff-val');
+            if (diffEl) diffEl.textContent = labels[level] || 'ปานกลาง';
+            initSession(true);
+        }
+
+        function changeStations(num) {
+            totalStations = parseInt(num, 10);
+            document.getElementById('station-slider').value = totalStations;
+            document.getElementById('slider-val').textContent = totalStations;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            initSession(true);
+        }
+
+        function onStationSlider(val) {
+            totalStations = parseInt(val, 10);
+            document.getElementById('slider-val').textContent = totalStations;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            initSession(true);
+        }
+
+        function updateProgressBar() {
+            if (progressFill) {
+                const percent = Math.min(100, Math.round(((currentRound) / totalStations) * 100));
+                progressFill.style.width = `${percent}%`;
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('tab-quiz').classList.toggle('active', mode === 'quiz');
+            document.getElementById('tab-explore').classList.toggle('active', mode === 'explore');
+            document.getElementById('quiz-view').style.display = mode === 'quiz' ? 'flex' : 'none';
+            document.getElementById('explore-view').style.display = mode === 'explore' ? 'flex' : 'none';
+            document.getElementById('stats-panel').style.display = mode === 'quiz' ? 'flex' : 'none';
+            document.getElementById('settings-bar').style.display = mode === 'quiz' ? 'flex' : 'none';
+            document.getElementById('btn-sound-replay').style.display = mode === 'quiz' ? 'inline-flex' : 'none';
+
+            if (mode === 'quiz') {
+                nextQuestion();
+            } else {
+                updateExploreCard();
+                renderLetterGrid();
+            }
+        }
+
+        function initSession(resetScore = true) {
+            if (resetScore) {
+                score = 0;
+                streak = 0;
+            }
+            currentRound = 1;
+            victoryModal.style.display = 'none';
+            updateStats();
+            nextQuestion();
+        }
+
+        function updateStats() {
+            scoreVal.textContent = score;
+            roundVal.textContent = `${currentRound} / ${totalStations}`;
+            streakVal.textContent = `🔥 ${streak}`;
+            updateProgressBar();
+        }
+
+        function nextQuestion() {
+            canAnswer = true;
+            updateStats();
+
+            // Random pick 1 target
+            currentTarget = THAI_ALPHABET[Math.floor(Math.random() * THAI_ALPHABET.length)];
+
+            // Determine distractor count by difficulty
+            let distractorCount = 3; // default medium: 4 choices
+            if (currentDifficulty === 'easy') distractorCount = 1; // 2 choices
+            else if (currentDifficulty === 'hard') distractorCount = 5; // 6 choices
+
+            const distractors = THAI_ALPHABET.filter(a => a.l !== currentTarget.l);
+            const shuffledDistractors = distractors.sort(() => 0.5 - Math.random()).slice(0, distractorCount);
+
+            currentOptions = [currentTarget, ...shuffledDistractors].sort(() => 0.5 - Math.random());
+
+            targetArt.textContent = currentTarget.e;
+            targetPrompt.textContent = `ตัวไหนคือ ${currentTarget.name} เอ่ย?`;
+            targetHint.textContent = `คำกลอน: "${currentTarget.rhyme}"`;
+
+            renderOptions();
+            speakQuestion();
+            syncPhone();
+        }
+
+        function renderOptions() {
+            optionsGrid.innerHTML = '';
+            // Adjust grid columns if hard mode (3 columns on hard, 2 on easy/medium)
+            optionsGrid.style.gridTemplateColumns = currentDifficulty === 'hard' ? 'repeat(3, 1fr)' : (currentDifficulty === 'easy' ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)');
+            currentOptions.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'opt-btn';
+                btn.innerHTML = `<span>${opt.l}</span><span class="opt-sub">${opt.name}</span>`;
+                btn.onclick = () => {
+                    if (!canAnswer) return;
+                    handleAnswer(opt, idx);
+                };
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function speakQuestion() {
+            soundManager.speakThai(`ตัวไหนคือ ${currentTarget.name} เอ่ย?`);
+        }
+
+        function handleAnswer(selectedOpt, btnIdx) {
+            if (!canAnswer) return;
+            canAnswer = false;
+            soundManager.init();
+
+            const buttons = optionsGrid.querySelectorAll('.opt-btn');
+            const isCorrect = selectedOpt.l === currentTarget.l;
+
+            if (isCorrect) {
+                buttons[btnIdx].classList.add('correct');
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! ${currentTarget.rhyme}`);
+                const bonus = currentDifficulty === 'hard' ? 20 : (currentDifficulty === 'medium' ? 15 : 10);
+                score += bonus + (streak * 2);
+                streak++;
+                confetti({ particleCount: 35, spread: 60, origin: { y: 0.6 } });
+            } else {
+                buttons[btnIdx].classList.add('wrong');
+                soundManager.playError();
+                streak = 0;
+                // Highlight correct button
+                currentOptions.forEach((o, i) => {
+                    if (o.l === currentTarget.l) buttons[i].classList.add('correct');
+                });
+                soundManager.speakThai(`ยังไม่ใช่นะจ๊ะ ตัวที่ถูกคือ ${currentTarget.name} จ้า`);
+            }
+
+            updateStats();
+
+            setTimeout(() => {
+                if (currentRound < totalStations) {
+                    currentRound++;
+                    nextQuestion();
+                } else {
+                    finishGame();
+                }
+            }, 2000);
+        }
+
+        function finishGame() {
+            soundManager.playWin();
+            soundManager.speakThai(`ยินดีด้วยจ้า เล่นจบด่านแล้ว ได้คะแนน ${score} คะแนน เก่งมากๆ เลย!`);
+            confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+
+            document.getElementById('modal-score').textContent = score;
+            document.getElementById('victory-msg').textContent = `ยินดีด้วยจ้า! พิชิตพยัญชนะไทยครบทั้ง ${totalStations} สถานีแล้ว!`;
+            victoryModal.style.display = 'flex';
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'GAME_WON', score }));
+            }
+        }
+
+        function nextLevel() {
+            initSession(false);
+        }
+
+        /* Mode 2: Explorer Functions */
+        function updateExploreCard() {
+            const item = THAI_ALPHABET[exploreIdx];
+            document.getElementById('card-letter').textContent = item.l;
+            document.getElementById('card-emoji').textContent = item.e;
+            document.getElementById('card-word').textContent = item.rhyme;
+            document.getElementById('card-index').textContent = `${exploreIdx + 1} / ${THAI_ALPHABET.length}`;
+
+            // Highlight chip
+            document.querySelectorAll('.letter-chip').forEach((c, i) => {
+                c.classList.toggle('active', i === exploreIdx);
+            });
+
+            speakExploreCard();
+            syncPhone();
+        }
+
+        function speakExploreCard() {
+            soundManager.init();
+            soundManager.playFlip();
+            soundManager.speakThai(THAI_ALPHABET[exploreIdx].rhyme);
+        }
+
+        function nextExplore() {
+            exploreIdx = (exploreIdx + 1) % THAI_ALPHABET.length;
+            updateExploreCard();
+        }
+
+        function prevExplore() {
+            exploreIdx = (exploreIdx - 1 + THAI_ALPHABET.length) % THAI_ALPHABET.length;
+            updateExploreCard();
+        }
+
+        function renderLetterGrid() {
+            const grid = document.getElementById('letter-grid');
+            grid.innerHTML = '';
+            THAI_ALPHABET.forEach((item, idx) => {
+                const chip = document.createElement('button');
+                chip.className = 'letter-chip' + (idx === exploreIdx ? ' active' : '');
+                chip.textContent = item.l;
+                chip.onclick = () => {
+                    exploreIdx = idx;
+                    updateExploreCard();
+                };
+                grid.appendChild(chip);
+            });
+        }
+
+        /* Phone Controller Sync */
+        function syncPhone() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                if (currentMode === 'quiz') {
+                    ws.send(JSON.stringify({
+                        type: 'SYNC_STATE',
+                        pairs: 4,
+                        matchedPairs: score,
+                        cards: currentOptions.map((opt, idx) => ({
+                            index: idx,
+                            emoji: opt.e,
+                            name: `${opt.l} (${opt.name})`
+                        }))
+                    }));
+                } else {
+                    ws.send(JSON.stringify({
+                        type: 'SYNC_STATE',
+                        pairs: 3,
+                        matchedPairs: exploreIdx,
+                        cards: [
+                            { index: 0, emoji: '⬅️', name: 'ก่อนหน้า' },
+                            { index: 1, emoji: '🔊', name: 'ฟังเสียง' },
+                            { index: 2, emoji: '➡️', name: 'ถัดไป' }
+                        ]
+                    }));
+                }
+            }
+        }
+
+        document.getElementById('btn-sound-replay').onclick = () => {
+            soundManager.init();
+            speakQuestion();
+        };
+        document.getElementById('btn-restart').onclick = () => {
+            if (currentMode === 'quiz') initSession(true);
+            else { exploreIdx = 0; updateExploreCard(); }
+        };
+        document.body.onclick = () => soundManager.init();
+
+        // Start
+        setTimeout(() => initSession(true), 250);
+    </script>
+</body>
+</html>

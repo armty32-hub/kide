@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ทายเสียงสัตว์ปริศนา - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .sound-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .speaker-box {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #60a5fa, #3b82f6);
+            border: 6px solid #ffffff;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: #ffffff;
+            cursor: pointer;
+            margin: 15px 0 25px;
+            transition: transform 0.15s;
+        }
+        .speaker-box:active, .speaker-box.playing {
+            transform: scale(1.15);
+            animation: pulse 0.5s infinite alternate;
+        }
+        .sound-choices {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .sound-card {
+            flex: 1;
+            max-width: 160px;
+            background: #ffffff;
+            border: 4px solid #bfdbfe;
+            border-radius: 24px;
+            padding: 16px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #93c5fd;
+            transition: all 0.15s;
+        }
+        .sound-card:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #93c5fd;
+        }
+        .sound-card.correct {
+            border-color: #22c55e;
+            background: #f0fdf4;
+        }
+        .sound-card.wrong {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">👂</span>
+            <h1 class="game-title">ทายเสียงสัตว์ปริศนา</h1>
+            <span class="title-emoji">🔊</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="sound-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #1e40af; margin-bottom: 10px;">
+            แตะลำโพงเพื่อฟังเสียง แล้วทายว่าเป็นสัตว์ตัวไหนเอ่ย? 🎵
+        </div>
+
+        <div class="speaker-box" id="speaker-btn" onclick="playSound()">
+            🔊
+        </div>
+
+        <div class="sound-choices" id="choices-row">
+            <!-- สัตว์ 3 ตัว -->
+        </div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">หูไวและเก่งที่สุด!</h2>
+            <p class="modal-subtitle">หนูฟังเสียงสัตว์แล้วทายถูกหมดทุกตัวเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const SOUND_ANIMALS = [
+            { id: 'dog', e: '🐶', n: 'น้องหมา', sound: 'โฮ่ง โฮ่ง โฮ่ง!' },
+            { id: 'cat', e: '🐱', n: 'น้องแมว', sound: 'เหมียว เหมียว~' },
+            { id: 'cow', e: '🐮', n: 'น้องวัว', sound: 'มอ... มออออ!' },
+            { id: 'frog', e: '🐸', n: 'กบน้อย', sound: 'อ๊บ อ๊บ อ๊บ!' },
+            { id: 'monkey', e: '🐵', n: 'ลิงจ๋อ', sound: 'เจี๊ยก เจี๊ยกกก!' }
+        ];
+
+        let currentQ = 0, score = 0, isLocked = false, targetAnimal = null, choices = [];
+        const speaker = document.getElementById('speaker-btn');
+        const choicesRow = document.getElementById('choices-row');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            const shuffled = [...SOUND_ANIMALS].sort(() => 0.5 - Math.random());
+            targetAnimal = shuffled[0];
+            choices = [targetAnimal, shuffled[1], shuffled[2]].sort(() => 0.5 - Math.random());
+
+            choicesRow.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const card = document.createElement('div');
+                card.className = 'sound-card';
+                card.innerHTML = `<span style="font-size:3.5rem;">${c.e}</span><span style="font-size:1.15rem;font-weight:700;margin-top:4px;">${c.n}</span>`;
+                card.addEventListener('click', () => check(idx));
+                choicesRow.appendChild(card);
+            });
+
+            setTimeout(playSound, 400);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: ch.e, name: ch.n }))
+                }));
+            }
+        }
+
+        function playSound() {
+            speaker.classList.add('playing');
+            soundManager.speakThai(targetAnimal.sound);
+            setTimeout(() => speaker.classList.remove('playing'), 1000);
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const cards = choicesRow.children;
+            if (choices[idx].id === targetAnimal.id) {
+                isLocked = true;
+                cards[idx].classList.add('correct');
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! นี่คือเสียงร้องของ${targetAnimal.n}!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < SOUND_ANIMALS.length) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                cards[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองกดฟังเสียงอีกรอบนะ!");
+                setTimeout(() => cards[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => { currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.body.onclick = () => soundManager.init();
+        loadQuestion();
+    </script>
+</body>
+</html>

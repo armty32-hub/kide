@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>สวนสัตว์หรรษา - เกมเปิดป้ายจับคู่สัตว์แสนสนุก</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- พลุกระดาษฉลองชัยชนะ -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- หัวข้อเกม -->
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🦁</span>
+            <h1 class="game-title">สวนสัตว์หรรษา จับคู่สัตว์</h1>
+            <span class="title-emoji">🐰</span>
+        </div>
+    </header>
+
+    <!-- แถบเลือกระดับความยากและปุ่มควบคุม -->
+    <div class="controls-container">
+        <div class="level-selector" role="group" aria-label="เลือกระดับความยาก">
+            <button class="btn-level active" data-pairs="3">
+                🌱 ง่าย (3 คู่)
+            </button>
+            <button class="btn-level" data-pairs="6">
+                ⭐ ปานกลาง (6 คู่)
+            </button>
+            <button class="btn-level" data-pairs="8">
+                🚀 ท้าทาย (8 คู่)
+            </button>
+        </div>
+
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าสวนสนุก 31 เกม">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <!-- ปุ่มต่อจอยมือถือ -->
+            <button id="btn-phone-connect" class="btn-icon btn-phone" title="ใช้โทรศัพท์มือถือเป็นจอยกด">
+                <span>📱</span> <span class="btn-text">ต่อจอยมือถือ</span>
+            </button>
+            <button id="btn-restart" class="btn-icon" title="เริ่มเกมใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+            <button id="btn-mute" class="btn-icon" title="เปิด/ปิดเสียง">
+                <span>🔊</span> <span class="btn-text">เปิดเสียง</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แถบสถานะความคืบหน้า และสถานะเชื่อมต่อมือถือ -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">🎯</span>
+            <span>พบแล้ว: <strong id="pairs-count">0</strong> / <strong id="total-pairs">3</strong> คู่</span>
+        </div>
+        <div class="status-item" id="phone-status-wrap">
+            <span class="phone-badge" id="phone-badge">
+                <span class="dot-status"></span>
+                <span id="phone-status-text">คลิก 'ต่อจอยมือถือ' เพื่อเชื่อมต่อ</span>
+            </span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">✨</span>
+            <span id="stars-display">⭐</span>
+        </div>
+    </div>
+
+    <!-- กระดานการ์ดจับคู่ -->
+    <main class="board-container">
+        <div id="board" class="board grid-easy">
+            <!-- การ์ดจะถูกสร้างด้วย JavaScript -->
+        </div>
+    </main>
+
+    <!-- หน้าต่าง QR Code สำหรับต่อมือถือ -->
+    <div id="qr-modal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-content qr-content">
+            <button class="btn-close-modal" id="btn-close-qr">✕</button>
+            <div class="qr-header">
+                <span class="qr-icon">📱</span>
+                <h2>ใช้มือถือเป็นจอยกด</h2>
+            </div>
+            <p class="qr-desc">ใช้กล้องโทรศัพท์มือถือสแกน QR Code ด้านล่างนี้ได้เลยครับ (ต่อ Wi-Fi เดียวกัน)</p>
+            <div class="qr-image-container">
+                <img id="qr-image" src="" alt="QR Code สำหรับต่อมือถือ" style="display:none;">
+                <div id="qr-loading" class="qr-loading">กำลังโหลด QR Code...</div>
+            </div>
+            <div class="qr-url-box">
+                <span class="url-label">หรือเปิดผ่านลิงก์นี้ในมือถือ:</span>
+                <a id="qr-link" href="#" target="_blank" class="url-link">-</a>
+            </div>
+            <div class="qr-tips">
+                💡 <strong>เคล็ดลับ:</strong> เมื่อเชื่อมต่อแล้ว น้องๆ สามารถใช้นิ้วแตะปุ่มในมือถือเพื่อเปิดการ์ดบนหน้าจอโน้ตบุ๊กนี้ได้ทันที!
+            </div>
+        </div>
+    </div>
+
+    <!-- หน้าต่างป๊อปอัปเมื่อชนะเกม -->
+    <div id="victory-modal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">เก่งที่สุดเลย!</h2>
+            <p class="modal-subtitle">หนูจับคู่สัตว์ได้ครบทุกตัวแล้วนะ</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">
+                <span>🎮</span> เล่นอีกรอบนะ!
+            </button>
+        </div>
+    </div>
+
+    <!-- สคริปต์ของเกม -->
+    <script src="sounds.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

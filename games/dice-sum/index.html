@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ทอยเต๋าวิเศษบวกแต้ม - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .dice-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .dice-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0 30px;
+        }
+        .dice-box {
+            width: 95px;
+            height: 95px;
+            background: #ffffff;
+            border: 4px solid #d97706;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            box-shadow: 0 8px 18px rgba(217, 119, 6, 0.25);
+            transition: transform 0.3s;
+        }
+        .dice-box.rolling {
+            animation: rollDice 0.5s ease;
+        }
+        @keyframes rollDice {
+            0% { transform: rotate(0deg) scale(0.8); }
+            50% { transform: rotate(180deg) scale(1.15); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+        .dice-plus {
+            font-size: 3rem;
+            font-weight: 900;
+            color: #d97706;
+        }
+        .choices-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .dice-num-btn {
+            width: 75px;
+            height: 75px;
+            border-radius: 24px;
+            background: #ffffff;
+            border: 4px solid #fed7aa;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #b45309;
+            box-shadow: 0 6px 0 #fdba74;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .dice-num-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #fdba74;
+        }
+        .dice-num-btn.correct {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+        .dice-num-btn.wrong {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🎲</span>
+            <h1 class="game-title">ทอยเต๋าวิเศษบวกแต้ม</h1>
+            <span class="title-emoji">✨</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / 5</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="dice-stage">
+        <div style="font-size: 1.35rem; font-weight: 700; color: #b45309; margin-bottom: 15px;">
+            นับจุดบนลูกเต๋าทั้งสองลูกรวมกัน ได้กี่แต้มเอ่ย? 🎲
+        </div>
+
+        <div class="dice-row">
+            <div class="dice-box" id="d1">⚂</div>
+            <span class="dice-plus">➕</span>
+            <div class="dice-box" id="d2">⚁</div>
+        </div>
+
+        <div class="choices-row" id="choices-row"></div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">รวมแต้มเต๋าเก่งมาก!</h2>
+            <p class="modal-subtitle">หนูนับแต้มลูกเต๋าได้เร็วและถูกต้องครบทุกข้อเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">🎮 เล่นอีกรอบนะ!</button>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const DICE_EMOJIS = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+        let currentQ = 0, score = 0, isLocked = false, currentSum = 0, choices = [];
+        const d1 = document.getElementById('d1');
+        const d2 = document.getElementById('d2');
+        const choicesRow = document.getElementById('choices-row');
+        const qEl = document.getElementById('current-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+
+            const n1 = Math.floor(Math.random() * 4) + 1; // 1..4
+            const n2 = Math.floor(Math.random() * 4) + 1; // 1..4
+            currentSum = n1 + n2;
+
+            d1.className = 'dice-box rolling';
+            d2.className = 'dice-box rolling';
+            setTimeout(() => {
+                d1.textContent = DICE_EMOJIS[n1];
+                d2.textContent = DICE_EMOJIS[n2];
+                d1.className = 'dice-box';
+                d2.className = 'dice-box';
+            }, 300);
+
+            choices = [currentSum, currentSum + 1, Math.max(2, currentSum - 1)].sort(() => 0.5 - Math.random());
+            choicesRow.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'dice-num-btn';
+                btn.textContent = c;
+                btn.addEventListener('click', () => check(idx));
+                choicesRow.appendChild(btn);
+            });
+
+            soundManager.speakThai(`รวมแต้มลูกเต๋าได้เท่าไหร่เอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: `${ch}`, name: `${ch} แต้ม` }))
+                }));
+            }
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const btns = choicesRow.children;
+            if (choices[idx] === currentSum) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! รวมได้ ${currentSum} แต้ม!`);
+                score += 20;
+                scoreEl.textContent = score;
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < 5) loadQuestion();
+                    else {
+                        soundManager.playWin();
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 2000);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองนับจุดดูอีกรอบ!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => { currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); currentQ = 0; score = 0; scoreEl.textContent = '0'; loadQuestion(); };
+        document.body.onclick = () => soundManager.init();
+        loadQuestion();
+    </script>
+</body>
+</html>

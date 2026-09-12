@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ห้องนิทานภาพมีเสียงเล่า - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .book-stage {
+            background: #ffffff;
+            border-radius: 36px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 750px;
+            width: 100%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            margin-top: 10px;
+            border: 6px solid #e0f2fe;
+        }
+        .story-selector {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .story-tab-btn {
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 25px;
+            border: none;
+            background: #f1f5f9;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .story-tab-btn.active {
+            background: #0284c7;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.35);
+        }
+        .illustration-box {
+            width: 100%;
+            height: 240px;
+            background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 60%, #86efac 100%);
+            border-radius: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: 4px solid #ffffff;
+        }
+        .story-actor {
+            font-size: 6rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));
+            user-select: none;
+        }
+        .story-actor:active {
+            transform: scale(1.2) rotate(-10deg);
+        }
+        .story-text-card {
+            background: #f8fafc;
+            border: 3px solid #cbd5e1;
+            border-radius: 22px;
+            padding: 20px 24px;
+            width: 100%;
+            font-size: 1.45rem;
+            line-height: 1.6;
+            color: #1e293b;
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 20px;
+            min-height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .story-text-card.speaking {
+            border-color: #0284c7;
+            background: #f0f9ff;
+            color: #0369a1;
+            box-shadow: 0 0 20px rgba(2, 132, 199, 0.2);
+        }
+        .book-nav {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        .book-btn {
+            font-family: inherit;
+            font-size: 1.15rem;
+            font-weight: 700;
+            padding: 10px 22px;
+            border-radius: 30px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .book-btn:active {
+            transform: scale(0.95);
+        }
+        .btn-speak {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .btn-prev {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .btn-next {
+            background: #22c55e;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">📚</span>
+            <h1 class="game-title">ห้องนิทานภาพมีเสียงเล่า</h1>
+            <span class="title-emoji">📖</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="อ่านใหม่ตั้งแต่ต้น">
+                <span>🔄</span> <span class="btn-text">เริ่มเรื่องใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <main class="book-stage">
+        <div class="story-selector">
+            <button class="story-tab-btn active" onclick="switchStory(0)">🐰 กระต่ายกับเต่า</button>
+            <button class="story-tab-btn" onclick="switchStory(1)">🐷 ลูกหมูสามตัว</button>
+            <button class="story-tab-btn" onclick="switchStory(2)">👦 เด็กเลี้ยงแกะ</button>
+            <button class="story-tab-btn" onclick="switchStory(3)">🦁 ราชสีห์กับหนู</button>
+            <button class="story-tab-btn" onclick="switchStory(4)">🐜 มดกับตั๊กแตน</button>
+        </div>
+
+        <div class="illustration-box" id="illustration-box">
+            <!-- ตัวการ์ตูนนิทาน -->
+        </div>
+
+        <div class="story-text-card" id="story-text-card">
+            <!-- ข้อความนิทาน -->
+        </div>
+
+        <div class="book-nav">
+            <button class="book-btn btn-prev" onclick="prevPage()">⬅️ หน้าก่อน</button>
+            <button class="book-btn btn-speak" onclick="speakCurrentPage()">🔊 ฟังเสียงเล่า</button>
+            <button class="book-btn btn-next" onclick="nextPage()">หน้าถัดไป ➡️</button>
+        </div>
+    </main>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const STORIES = [
+            {
+                title: 'กระต่ายกับเต่า',
+                pages: [
+                    {
+                        actors: ['🐰', '🌳'],
+                        text: 'ณ ป่าใหญ่ กระต่ายน้อยแสนปราดเปรียว ชอบคุยโม้ว่าตนเองวิ่งได้เร็วที่สุดในป่า',
+                        speech: 'ณ ป่าใหญ่ กระต่ายน้อยแสนปราดเปรียว ชอบคุยโม้ว่าตนเองวิ่งได้เร็วที่สุดในป่า'
+                    },
+                    {
+                        actors: ['🐢', '🐰'],
+                        text: 'เจ้าเต่าต้วมเตี้ยมจึงขอท้าแข่งวิ่ง กระต่ายหัวเราะร่าและยอมรับคำท้าทันที',
+                        speech: 'เจ้าเต่าต้วมเตี้ยมจึงขอท้าแข่งวิ่ง กระต่ายหัวเราะร่าและยอมรับคำท้าทันที'
+                    },
+                    {
+                        actors: ['🐰💤', '🌳'],
+                        text: 'กระต่ายวิ่งนำไปไกลจนชะล่าใจ จึงแวะนอนหลับสบายอยู่ใต้ต้นไม้ใหญ่',
+                        speech: 'กระต่ายวิ่งนำไปไกลจนชะล่าใจ จึงแวะนอนหลับสบายอยู่ใต้ต้นไม้ใหญ่'
+                    },
+                    {
+                        actors: ['🐢🏆', '🏁'],
+                        text: 'เต่าเดินก้าวทีละก้าวอย่างไม่ยอมแพ้ จนเดินผ่านกระต่ายและเข้าเส้นชัยเป็นผู้ชนะ!',
+                        speech: 'เต่าเดินก้าวทีละก้าวอย่างไม่ยอมแพ้ จนเดินผ่านกระต่ายและเข้าเส้นชัยเป็นผู้ชนะ! นิทานเรื่องนี้สอนให้รู้ว่า ความพยายามอยู่ที่ไหน ความสำเร็จอยู่ที่นั่นจ้า'
+                    }
+                ]
+            },
+            {
+                title: 'ลูกหมูสามตัว',
+                pages: [
+                    {
+                        actors: ['🐷', '🌾'],
+                        text: 'ลูกหมูตัวที่หนึ่ง ขี้เกียจที่สุด จึงเลือกสร้างบ้านด้วยฟางข้าว เพราะสร้างง่ายและเสร็จเร็ว',
+                        speech: 'ลูกหมูตัวที่หนึ่ง ขี้เกียจที่สุด จึงเลือกสร้างบ้านด้วยฟางข้าว เพราะสร้างง่ายและเสร็จเร็ว'
+                    },
+                    {
+                        actors: ['🐷', '🪵'],
+                        text: 'ลูกหมูตัวที่สอง ชอบสบาย จึงสร้างบ้านด้วยเศษไม้ ใช้เวลาไม่นานก็เสร็จ',
+                        speech: 'ลูกหมูตัวที่สอง ชอบสบาย จึงสร้างบ้านด้วยเศษไม้ ใช้เวลาไม่นานก็เสร็จ'
+                    },
+                    {
+                        actors: ['🐷', '🧱'],
+                        text: 'ลูกหมูตัวที่สาม ขยันและอดทน ตั้งใจสร้างบ้านด้วยอิฐและปูนที่แข็งแรงทนทาน',
+                        speech: 'ลูกหมูตัวที่สาม ขยันและอดทน ตั้งใจสร้างบ้านด้วยอิฐและปูนที่แข็งแรงทนทาน'
+                    },
+                    {
+                        actors: ['🐺💨', '🏠🧱'],
+                        text: 'หมาป่าเป่าบ้านฟางและบ้านไม้พัง แต่เป่าบ้านอิฐไม่พัง ลูกหมูทั้งสามจึงปลอดภัย!',
+                        speech: 'หมาป่าเป่าบ้านฟางและบ้านไม้พัง แต่เป่าบ้านอิฐไม่พัง ลูกหมูทั้งสามจึงปลอดภัยอย่างมีความสุขจ้า!'
+                    }
+                ]
+            },
+            {
+                title: 'เด็กเลี้ยงแกะ',
+                pages: [
+                    {
+                        actors: ['👦', '🐑🐑'],
+                        text: 'เด็กเลี้ยงแกะคนหนึ่ง เกิดความเบื่อหน่าย จึงแกล้งตะโกนหลอกชาวบ้านว่า "ช่วยด้วย! หมาป่ามากินแกะแล้ว!"',
+                        speech: 'เด็กเลี้ยงแกะคนหนึ่ง เกิดความเบื่อหน่าย จึงแกล้งตะโกนหลอกชาวบ้านว่า ช่วยด้วย ช่วยด้วย หมาป่ามากินแกะแล้ว'
+                    },
+                    {
+                        actors: ['👨‍🌾🏃‍♂️', '👦😆'],
+                        text: 'ชาวบ้านถือจอบเสียมรีบวิ่งมาช่วย แต่เด็กเลี้ยงแกะกลับหัวเราะชอบใจที่หลอกทุกคนสำเร็จ',
+                        speech: 'ชาวบ้านถือจอบเสียมรีบวิ่งมาช่วย แต่เด็กเลี้ยงแกะกลับหัวเราะชอบใจที่หลอกทุกคนสำเร็จ'
+                    },
+                    {
+                        actors: ['🐺', '😱🐑'],
+                        text: 'วันหนึ่ง หมาป่าตัวจริงโผล่ออกมาไล่กัดกินฝูงแกะ เด็กเลี้ยงแกะตกใจกลัวและร้องขอความช่วยเหลือสุดเสียง',
+                        speech: 'วันหนึ่ง หมาป่าตัวจริงโผล่ออกมาไล่กัดกินฝูงแกะ เด็กเลี้ยงแกะตกใจกลัวและร้องขอความช่วยเหลือสุดเสียง'
+                    },
+                    {
+                        actors: ['🐺💨', '😭'],
+                        text: 'แต่คราวนี้ไม่มีชาวบ้านคนไหนเชื่อและไม่มีใครมาช่วย นิทานสอนว่า คนชอบพูดโกหก ถึงแม้พูดความจริงก็ไม่มีใครเชื่อ',
+                        speech: 'แต่คราวนี้ไม่มีชาวบ้านคนไหนเชื่อและไม่มีใครมาช่วย นิทานเรื่องนี้สอนให้รู้ว่า คนชอบพูดโกหก ถึงแม้พูดจริงก็ไม่มีใครเชื่อจ้า'
+                    }
+                ]
+            },
+            {
+                title: 'ราชสีห์กับหนู',
+                pages: [
+                    {
+                        actors: ['🦁💤', '🐭'],
+                        text: 'เจ้าหนูตัวน้อยวิ่งซุกซน จนเผลอวิ่งขึ้นไปบนตัวสิงโตเจ้าป่าที่กำลังนอนหลับสบาย',
+                        speech: 'เจ้าหนูตัวน้อยวิ่งซุกซน จนเผลอวิ่งขึ้นไปบนตัวสิงโตเจ้าป่าที่กำลังนอนหลับสบาย'
+                    },
+                    {
+                        actors: ['🦁💢', '🐭🙏'],
+                        text: 'สิงโตตื่นขึ้นมาด้วยความโกรธและตะปบหนูไว้ แต่เจ้าหนูอ้อนวอนขอชีวิตและสัญญาว่าจะมาตอบแทนบุญคุณในวันหน้า',
+                        speech: 'สิงโตตื่นขึ้นมาด้วยความโกรธและตะปบหนูไว้ แต่เจ้าหนูอ้อนวอนขอชีวิตและสัญญาว่าจะมาตอบแทนบุญคุณในวันหน้า'
+                    },
+                    {
+                        actors: ['🦁🕸️', '🌲'],
+                        text: 'ต่อมา สิงโตพลาดท่าติดกับดักตาข่ายของนายพราน ดิ้นไม่หลุดจึงร้องคำรามก้องป่าด้วยความสิ้นหวัง',
+                        speech: 'ต่อมา สิงโตพลาดท่าติดกับดักตาข่ายของนายพราน ดิ้นไม่หลุดจึงร้องคำรามก้องป่าด้วยความสิ้นหวัง'
+                    },
+                    {
+                        actors: ['🐭✨', '🦁🏆'],
+                        text: 'เจ้าหนูได้ยินเสียงร้องจึงรีบวิ่งมา ใช้ฟันคมกัดแทะตาข่ายจนขาด ช่วยราชสีห์ให้เป็นอิสระได้สำเร็จ!',
+                        speech: 'เจ้าหนูได้ยินเสียงร้องจึงรีบวิ่งมา ใช้ฟันคมกัดแทะตาข่ายจนขาด ช่วยราชสีห์ให้เป็นอิสระได้สำเร็จ นิทานสอนว่า ผู้มีพระคุณและเพื่อนตัวเล็กๆ ก็สามารถช่วยผู้ยิ่งใหญ่ได้'
+                    }
+                ]
+            },
+            {
+                title: 'มดกับตั๊กแตน',
+                pages: [
+                    {
+                        actors: ['🐜🌾', '☀️'],
+                        text: 'ในฤดูร้อน แสงแดดอบอุ่น ฝูงมดตัวน้อยขยันขันแข็ง พากันเดินแถวขนเมล็ดพืชไปเก็บตุนไว้ในรัง',
+                        speech: 'ในฤดูร้อน แสงแดดอบอุ่น ฝูงมดตัวน้อยขยันขันแข็ง พากันเดินแถวขนเมล็ดพืชไปเก็บตุนไว้ในรัง'
+                    },
+                    {
+                        actors: ['🦗🎸', '🎶'],
+                        text: 'ส่วนเจ้าตั๊กแตนรักสบาย ไม่ยอมทำงาน เอาแต่นั่งร้องเพลงและดีดกีตาร์อย่างเพลิดเพลินใจตลอดทั้งวัน',
+                        speech: 'ส่วนเจ้าตั๊กแตนรักสบาย ไม่ยอมทำงาน เอาแต่นั่งร้องเพลงและดีดกีตาร์อย่างเพลิดเพลินใจตลอดทั้งวัน'
+                    },
+                    {
+                        actors: ['❄️🥶', '🦗💧'],
+                        text: 'เมื่อลมหนาวพัดมา หิมะตกขาวโพลน ตั๊กแตนไม่มีอาหารกินเลยแม้แต่เม็ดเดียว ร่างกายหนาวสั่นและหิวโซ',
+                        speech: 'เมื่อลมหนาวพัดมา หิมะตกขาวโพลน ตั๊กแตนไม่มีอาหารกินเลยแม้แต่เม็ดเดียว ร่างกายหนาวสั่นและหิวโซ'
+                    },
+                    {
+                        actors: ['🐜🍲', '🦗✨'],
+                        text: 'มดใจดีจึงแบ่งอาหารอุ่นๆ ให้ตั๊กแตน นิทานสอนให้รู้ว่า ควรเตรียมพร้อมและขยันทำงานในยามที่ยังมีโอกาส',
+                        speech: 'มดใจดีจึงแบ่งอาหารอุ่นๆ ให้ตั๊กแตน นิทานเรื่องนี้สอนให้รู้ว่า ควรเตรียมพร้อมและขยันทำงานในยามที่ยังมีโอกาสจ้า'
+                    }
+                ]
+            }
+        ];
+
+        let storyIdx = 0, pageIdx = 0;
+        const illustBox = document.getElementById('illustration-box');
+        const textCard = document.getElementById('story-text-card');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') {
+                    if (d.index === 0) prevPage();
+                    else if (d.index === 1) speakCurrentPage();
+                    else if (d.index === 2) nextPage();
+                }
+            };
+        } catch(e){}
+
+        function switchStory(idx) {
+            storyIdx = idx;
+            pageIdx = 0;
+            document.querySelectorAll('.story-tab-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+            renderPage();
+        }
+
+        function renderPage() {
+            const page = STORIES[storyIdx].pages[pageIdx];
+            illustBox.innerHTML = '';
+            page.actors.forEach(act => {
+                const span = document.createElement('span');
+                span.className = 'story-actor';
+                span.textContent = act;
+                span.onclick = () => {
+                    soundManager.playFlip();
+                    span.style.transform = 'scale(1.3) rotate(10deg)';
+                    setTimeout(() => span.style.transform = 'scale(1)', 300);
+                };
+                illustBox.appendChild(span);
+            });
+
+            textCard.textContent = `หน้า ${pageIdx + 1}: ${page.text}`;
+            speakCurrentPage();
+            syncPhone();
+        }
+
+        function speakCurrentPage() {
+            const page = STORIES[storyIdx].pages[pageIdx];
+            textCard.classList.add('speaking');
+            soundManager.speakThai(page.speech);
+            setTimeout(() => textCard.classList.remove('speaking'), 4500);
+        }
+
+        function nextPage() {
+            soundManager.playClick();
+            if (pageIdx < STORIES[storyIdx].pages.length - 1) {
+                pageIdx++;
+                renderPage();
+            } else {
+                soundManager.playWin();
+                soundManager.speakThai("จบนิทานแล้วจ้า เก่งมากๆ เลยคนดี!");
+            }
+        }
+
+        function prevPage() {
+            soundManager.playClick();
+            if (pageIdx > 0) {
+                pageIdx--;
+                renderPage();
+            }
+        }
+
+        function syncPhone() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: 3,
+                    matchedPairs: pageIdx,
+                    cards: [
+                        { index: 0, emoji: '⬅️', name: 'หน้าก่อน' },
+                        { index: 1, emoji: '🔊', name: 'ฟังเสียง' },
+                        { index: 2, emoji: '➡️', name: 'หน้าถัดไป' }
+                    ]
+                }));
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => { pageIdx = 0; renderPage(); };
+        document.body.onclick = () => soundManager.init();
+        setTimeout(renderPage, 200);
+    </script>
+</body>
+</html>

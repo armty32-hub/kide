@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>สะกดคำสระหรรษา - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .phonics-stage {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .spelling-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 4px solid #10b981;
+            border-radius: 28px;
+            padding: 24px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+        .tile-block {
+            width: 85px;
+            height: 95px;
+            border-radius: 22px;
+            background: #ffffff;
+            border: 4px solid #34d399;
+            box-shadow: 0 6px 0 #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #065f46;
+        }
+        .spell-plus {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #059669;
+        }
+        .result-tile {
+            width: 110px;
+            height: 95px;
+            border-radius: 22px;
+            background: #059669;
+            border: 4px solid #ffffff;
+            box-shadow: 0 6px 0 #047857;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.2rem;
+            font-weight: 900;
+            color: #ffffff;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .result-tile:active {
+            transform: scale(1.1);
+        }
+        .target-art {
+            font-size: 5rem;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 6px 6px rgba(0,0,0,0.1));
+        }
+        .choices-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        .phonics-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            background: #ffffff;
+            border: 4px solid #a7f3d0;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #065f46;
+            box-shadow: 0 6px 0 #6ee7b7;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .phonics-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #6ee7b7;
+        }
+        .phonics-btn.correct {
+            background: #22c55e;
+            color: #ffffff;
+            border-color: #16a34a;
+        }
+        .phonics-btn.wrong {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+        .settings-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 14px 20px;
+            max-width: 680px;
+            width: 100%;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+            border: 3px solid #a7f3d0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .setting-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #065f46;
+            min-width: 120px;
+        }
+        .setting-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .level-chip, .station-chip {
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .level-chip:hover, .station-chip:hover {
+            border-color: #059669;
+            color: #059669;
+        }
+        .level-chip.active, .station-chip.active {
+            background: #059669;
+            color: #ffffff;
+            border-color: #047857;
+            box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
+            transform: scale(1.03);
+        }
+        .custom-station-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ecfdf5;
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid #a7f3d0;
+        }
+        .custom-station-wrap input[type="range"] {
+            accent-color: #059669;
+            cursor: pointer;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid #cbd5e1;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #34d399, #059669);
+            width: 10%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🗣️</span>
+            <div>
+                <h1 class="game-title">สะกดคำสระหรรษา</h1>
+                <div style="font-size: 1rem; color: #047857; font-weight: 700; margin-top: 4px;">🇹🇭 รวมพยัญชนะไทยครบทั้งหมด 44 ตัว (ก-ฮ)</div>
+            </div>
+            <span class="title-emoji">✨</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แผงตั้งค่าระดับความยากและจำนวนสถานี -->
+    <div class="settings-bar">
+        <div class="setting-group">
+            <span class="setting-title">🎚️ ระดับความยาก:</span>
+            <div class="setting-options">
+                <button class="level-chip" data-level="easy" onclick="changeDifficulty('easy')">🌱 ง่าย (3 ช้อยส์ สระพื้นฐาน)</button>
+                <button class="level-chip active" data-level="medium" onclick="changeDifficulty('medium')">🌿 ปานกลาง (4 ช้อยส์)</button>
+                <button class="level-chip" data-level="hard" onclick="changeDifficulty('hard')">🔥 ท้าทาย (5 ช้อยส์ ตัวคล้ายกัน)</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-title">🚩 จำนวนสถานี:</span>
+            <div class="setting-options">
+                <button class="station-chip" data-stations="5" onclick="changeStations(5)">5 สถานี</button>
+                <button class="station-chip active" data-stations="10" onclick="changeStations(10)">10 สถานี</button>
+                <button class="station-chip" data-stations="20" onclick="changeStations(20)">20 สถานี</button>
+                <button class="station-chip" data-stations="30" onclick="changeStations(30)">30 สถานี</button>
+                <button class="station-chip" data-stations="50" onclick="changeStations(50)">50 สถานี</button>
+                <div class="custom-station-wrap">
+                    <span style="font-size:0.9rem;font-weight:700;color:#065f46;">เลื่อนปรับเอง:</span>
+                    <input type="range" id="station-slider" min="5" max="50" step="5" value="10" oninput="onStationSlider(this.value)">
+                    <span id="slider-val" style="font-weight:800;color:#047857;min-width:32px;">10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">🚩</span>
+            <span>สถานีที่: <strong id="current-q">1</strong> / <span id="total-q">10</span></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🎚️</span>
+            <span>ระดับ: <strong id="current-diff-label">ปานกลาง</strong></span>
+        </div>
+    </div>
+
+    <main class="phonics-stage">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <div class="target-art" id="target-art">🐦</div>
+        <div style="font-size: 1.35rem; font-weight: 700; color: #065f46; margin-bottom: 15px;" id="hint-text">
+            เลือกพยัญชนะมาผสมสระ ให้ตรงกับรูปภาพนะ! 🗣️
+        </div>
+
+        <div class="spelling-box">
+            <div class="tile-block" id="letter-slot">?</div>
+            <span class="spell-plus">➕</span>
+            <div class="tile-block" id="vowel-slot">า</div>
+            <span class="spell-plus">🟰</span>
+            <div class="result-tile" id="result-tile" onclick="speakPhonics()">?</div>
+        </div>
+
+        <div class="choices-row" id="choices-row"></div>
+    </main>
+
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">ผ่านครบทุกสถานีแล้วจ้า!</h2>
+            <p class="modal-subtitle">ยอดเยี่ยมมาก! หนูพิชิตการสะกดคำครบทั้ง <strong id="modal-stations-final">10</strong> สถานี ได้คะแนน <strong id="modal-score-final" style="color:#e11d48;">0</strong> คะแนน!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div style="display:flex;gap:12px;width:100%;margin-top:15px;flex-wrap:wrap;">
+                <button id="btn-next-level" class="btn-play-again" style="background:#059669;flex:1;min-width:180px;">🌟 เล่นต่อด่านถัดไป!</button>
+                <button id="btn-play-again" class="btn-play-again" style="background:#0284c7;flex:1;min-width:180px;">🔄 เริ่มสถานีใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        const ALL_WORDS = [
+            // ก (3 คำ)
+            { art: '🐦', c: 'ก', v: 'า', word: 'กา', phonics: 'กอ อา กา' },
+            { art: '🐔', c: 'ก', v: 'ไ', word: 'ไก', phonics: 'กอ ไอ ไก' },
+            { art: '🖐️', c: 'ก', v: 'เ-า', word: 'เกา', phonics: 'กอ เอา เกา' },
+
+            // ข (2 คำ)
+            { art: '🦵', c: 'ข', v: 'า', word: 'ขา', phonics: 'ขอ อา ขา' },
+            { art: '🥚', c: 'ข', v: 'ไ', word: 'ไข', phonics: 'ขอ ไอ ไข' },
+
+            // ฃ (1 คำ)
+            { art: '🍶', c: 'ฃ', v: 'า', word: 'ฃา', phonics: 'ขอ อา ฃา' },
+
+            // ค (2 คำ)
+            { art: '💧', c: 'ค', v: 'ู', word: 'คู', phonics: 'คอ อู คู' },
+            { art: '🌿', c: 'ค', v: 'แ', word: 'แค', phonics: 'คอ แอ แค' },
+
+            // ฅ (1 คำ)
+            { art: '👨', c: 'ฅ', v: 'า', word: 'ฅา', phonics: 'คอ อา ฅา' },
+
+            // ฆ (2 คำ)
+            { art: '🔔', c: 'ฆ', v: 'า', word: 'ฆา', phonics: 'คอ อา ฆา' },
+            { art: '🔔', c: 'ฆ', v: 'ี', word: 'ฆี', phonics: 'คอ อี ฆี' },
+
+            // ง (2 คำ)
+            { art: '🐍', c: 'ง', v: 'ู', word: 'งู', phonics: 'งอ อู งู' },
+            { art: '👤', c: 'ง', v: 'เ-า', word: 'เงา', phonics: 'งอ เอา เงา' },
+
+            // จ (2 คำ)
+            { art: '❤️', c: 'จ', v: 'ใ', word: 'ใจ', phonics: 'จอ ใอ ใจ' },
+            { art: '🍽️', c: 'จ', v: 'า', word: 'จา', phonics: 'จอ อา จา' },
+
+            // ฉ (2 คำ)
+            { art: '🎶', c: 'ฉ', v: 'า', word: 'ฉา', phonics: 'ฉอ อา ฉา' },
+            { art: '💉', c: 'ฉ', v: 'ี', word: 'ฉี', phonics: 'ฉอ อี ฉี' },
+
+            // ช (3 คำ)
+            { art: '🍵', c: 'ช', v: 'า', word: 'ชา', phonics: 'ชอ อา ชา' },
+            { art: '🙋', c: 'ช', v: 'ู', word: 'ชู', phonics: 'ชอ อู ชู' },
+            { art: 'ชี', c: 'ช', v: 'ี', word: 'ชี', phonics: 'ชอ อี ชี' },
+
+            // ซ (3 คำ)
+            { art: '⛓️', c: 'ซ', v: 'โ', word: 'โซ', phonics: 'ซอ โอ โซ' },
+            { art: 'ซู่ซ่า', c: 'ซ', v: 'ู', word: 'ซู', phonics: 'ซอ อู ซู' },
+            { art: '🚶', c: 'ซ', v: 'เ', word: 'เซ', phonics: 'ซอ เอ เซ' },
+
+            // ฌ (1 คำ)
+            { art: '🌳', c: 'ฌ', v: 'า', word: 'ฌา', phonics: 'ชอ อา ฌา' },
+
+            // ญ (2 คำ)
+            { art: '👧', c: 'ญ', v: 'า', word: 'ญา', phonics: 'ยอ อา ญา' },
+            { art: '✨', c: 'ญ', v: 'ี', word: 'ญี', phonics: 'ยอ อี ญี' },
+
+            // ฎ (2 คำ)
+            { art: '👑', c: 'ฎ', v: 'า', word: 'ฎา', phonics: 'ดอ อา ฎา' },
+            { art: '👑', c: 'ฎ', v: 'ี', word: 'ฎี', phonics: 'ดอ อี ฎี' },
+
+            // ฏ (2 คำ)
+            { art: '🦯', c: 'ฏ', v: 'า', word: 'ฏา', phonics: 'ตอ อา ฏา' },
+            { art: '🦯', c: 'ฏ', v: 'ี', word: 'ฏี', phonics: 'ตอ อี ฏี' },
+
+            // ฐ (2 คำ)
+            { art: '🏛️', c: 'ฐ', v: 'า', word: 'ฐา', phonics: 'ถอ อา ฐา' },
+            { art: '💰', c: 'ฐ', v: 'ี', word: 'ฐี', phonics: 'ถอ อี ฐี' },
+
+            // ฑ (2 คำ)
+            { art: '👸', c: 'ฑ', v: 'า', word: 'ฑา', phonics: 'ทอ อา ฑา' },
+            { art: '👸', c: 'ฑ', v: 'ี', word: 'ฑี', phonics: 'ทอ อี ฑี' },
+
+            // ฒ (2 คำ)
+            { art: '👴', c: 'ฒ', v: 'า', word: 'ฒา', phonics: 'ทอ อา ฒา' },
+            { art: '👴', c: 'ฒ', v: 'ี', word: 'ฒี', phonics: 'ทอ อี ฒี' },
+
+            // ณ (2 คำ)
+            { art: '🧘', c: 'ณ', v: 'า', word: 'ณา', phonics: 'นอ อา ณา' },
+            { art: '🧘', c: 'ณ', v: 'ี', word: 'ณี', phonics: 'นอ อี ณี' },
+
+            // ด (3 คำ)
+            { art: '👍', c: 'ด', v: 'ี', word: 'ดี', phonics: 'ดอ อี ดี' },
+            { art: '👀', c: 'ด', v: 'ู', word: 'ดู', phonics: 'ดอ อู ดู' },
+            { art: '🗡️', c: 'ด', v: 'า', word: 'ดา', phonics: 'ดอ อา ดา' },
+
+            // ต (4 คำ)
+            { art: '👁️', c: 'ต', v: 'า', word: 'ตา', phonics: 'ตอ อา ตา' },
+            { art: '🥁', c: 'ต', v: 'ี', word: 'ตี', phonics: 'ตอ อี ตี' },
+            { art: '🌳', c: 'ต', v: 'โ', word: 'โต', phonics: 'ตอ โอ โต' },
+            { art: '🔥', c: 'ต', v: 'เ-า', word: 'เตา', phonics: 'ตอ เอา เตา' },
+
+            // ถ (3 คำ)
+            { art: '🧽', c: 'ถ', v: 'ู', word: 'ถู', phonics: 'ถอ อู ถู' },
+            { art: '🏺', c: 'ถ', v: 'โ', word: 'โถ', phonics: 'ถอ โอ โถ' },
+            { art: '🌊', c: 'ถ', v: 'า', word: 'ถา', phonics: 'ถอ อา ถา' },
+
+            // ท (3 คำ)
+            { art: '🧴', c: 'ท', v: 'า', word: 'ทา', phonics: 'ทอ อา ทา' },
+            { art: '🐟', c: 'ท', v: 'ู', word: 'ทู', phonics: 'ทอ อู ทู' },
+            { art: '🫗', c: 'ท', v: 'เ', word: 'เท', phonics: 'ทอ เอ เท' },
+
+            // ธ (3 คำ)
+            { art: '🇹🇭', c: 'ธ', v: 'า', word: 'ธา', phonics: 'ธอ อา ธา' },
+            { art: '⏱️', c: 'ธ', v: 'ี', word: 'ธี', phonics: 'ธอ อี ธี' },
+            { art: '🏹', c: 'ธ', v: 'ู', word: 'ธู', phonics: 'ธอ อู ธู' },
+
+            // น (2 คำ)
+            { art: '🌾', c: 'น', v: 'า', word: 'นา', phonics: 'นอ อา นา' },
+            { art: '📦', c: 'น', v: 'ใ', word: 'ใน', phonics: 'นอ ใอ ใน' },
+
+            // บ (4 คำ)
+            { art: '🍃', c: 'บ', v: 'ใ', word: 'ใบ', phonics: 'บอ ใอ ใบ' },
+            { art: '🎀', c: 'บ', v: 'โ', word: 'โบ', phonics: 'บอ โอ โบ' },
+            { art: '🤲', c: 'บ', v: 'แ', word: 'แบ', phonics: 'บอ แอ แบ' },
+            { art: '🪶', c: 'บ', v: 'เ-า', word: 'เบา', phonics: 'บอ เอา เบา' },
+
+            // ป (4 คำ)
+            { art: '🦀', c: 'ป', v: 'ู', word: 'ปู', phonics: 'ปอ อู ปู' },
+            { art: '🎯', c: 'ป', v: 'า', word: 'ปา', phonics: 'ปอ อา ปา' },
+            { art: '🗓️', c: 'ป', v: 'ี', word: 'ปี', phonics: 'ปอ อี ปี' },
+            { art: '🚶', c: 'ป', v: 'ไ', word: 'ไป', phonics: 'ปอ ไอ ไป' },
+
+            // ผ (3 คำ)
+            { art: '👻', c: 'ผ', v: 'ี', word: 'ผี', phonics: 'ผอ อี ผี' },
+            { art: '🔥', c: 'ผ', v: 'เ-า', word: 'เผา', phonics: 'ผอ เอา เผา' },
+            { art: '🎋', c: 'ผ', v: 'ไ', word: 'ไผ', phonics: 'ผอ ไอ ไผ' },
+
+            // ฝ (3 คำ)
+            { art: '🪣', c: 'ฝ', v: 'า', word: 'ฝา', phonics: 'ฝอ อา ฝา' },
+            { art: '🩹', c: 'ฝ', v: 'ี', word: 'ฝี', phonics: 'ฝอ อี ฝี' },
+            { art: 'ไฝ', c: 'ฝ', v: 'ไ', word: 'ไฝ', phonics: 'ฝอ ไอ ไฝ' },
+
+            // พ (3 คำ)
+            { art: '🛶', c: 'พ', v: 'แ', word: 'แพ', phonics: 'พอ แอ แพ' },
+            { art: '🚶', c: 'พ', v: 'า', word: 'พา', phonics: 'พอ อา พา' },
+            { art: 'พี', c: 'พ', v: 'ี', word: 'พี', phonics: 'พอ อี พี' },
+
+            // ฟ (3 คำ)
+            { art: '🔥', c: 'ฟ', v: 'ไ', word: 'ไฟ', phonics: 'ฟอ ไอ ไฟ' },
+            { art: '🐕', c: 'ฟ', v: 'ู', word: 'ฟู', phonics: 'ฟอ อู ฟู' },
+            { art: '👑', c: 'ฟ', v: 'า', word: 'ฟา', phonics: 'ฟอ อา ฟา' },
+
+            // ภ (2 คำ)
+            { art: '⛰️', c: 'ภ', v: 'ู', word: 'ภู', phonics: 'ภอ อู ภู' },
+            { art: '⛵', c: 'ภ', v: 'า', word: 'ภา', phonics: 'ภอ อา ภา' },
+
+            // ม (4 คำ)
+            { art: '✋', c: 'ม', v: 'า', word: 'มา', phonics: 'มอ อา มา' },
+            { art: '🤝', c: 'ม', v: 'ี', word: 'มี', phonics: 'มอ อี มี' },
+            { art: '🍉', c: 'ม', v: 'โ', word: 'โม', phonics: 'มอ โอ โม' },
+            { art: '🥴', c: 'ม', v: 'เ-า', word: 'เมา', phonics: 'มอ เอา เมา' },
+
+            // ย (3 คำ)
+            { art: '💊', c: 'ย', v: 'า', word: 'ยา', phonics: 'ยอ อา ยา' },
+            { art: '🕸️', c: 'ย', v: 'ใ', word: 'ใย', phonics: 'ยอ ใอ ใย' },
+            { art: '🥋', c: 'ย', v: 'ู', word: 'ยู', phonics: 'ยอ อู ยู' },
+
+            // ร (4 คำ)
+            { art: '🕳️', c: 'ร', v: 'ู', word: 'รู', phonics: 'รอ อู รู' },
+            { art: '👥', c: 'ร', v: 'เ-า', word: 'เรา', phonics: 'รอ เอา เรา' },
+            { art: 'รา', c: 'ร', v: 'า', word: 'รา', phonics: 'รอ อา รา' },
+            { art: 'รี', c: 'ร', v: 'ี', word: 'รี', phonics: 'รอ อี รี' },
+
+            // ล (3 คำ)
+            { art: '🐴', c: 'ล', v: 'า', word: 'ลา', phonics: 'ลอ อา ลา' },
+            { art: '🐬', c: 'ล', v: 'โ', word: 'โล', phonics: 'ลอ โอ โล' },
+            { art: '👀', c: 'ล', v: 'แ', word: 'แล', phonics: 'ลอ แอ แล' },
+
+            // ว (3 คำ)
+            { art: '📏', c: 'ว', v: 'า', word: 'วา', phonics: 'วอ อา วา' },
+            { art: '💨', c: 'ว', v: 'ี', word: 'วี', phonics: 'วอ อี วี' },
+            { art: '⚡', c: 'ว', v: 'ไ', word: 'ไว', phonics: 'วอ ไอ ไว' },
+
+            // ศ (2 คำ)
+            { art: '🛖', c: 'ศ', v: 'า', word: 'ศา', phonics: 'สอ อา ศา' },
+            { art: '📿', c: 'ศ', v: 'ี', word: 'ศี', phonics: 'สอ อี ศี' },
+
+            // ษ (2 คำ)
+            { art: '🧙', c: 'ษ', v: 'า', word: 'ษา', phonics: 'สอ อา ษา' },
+            { art: '🧙', c: 'ษ', v: 'ี', word: 'ษี', phonics: 'สอ อี ษี' },
+
+            // ส (4 คำ)
+            { art: '🎨', c: 'ส', v: 'ี', word: 'สี', phonics: 'สอ อี สี' },
+            { art: '🏛️', c: 'ส', v: 'เ-า', word: 'เสา', phonics: 'สอ เอา เสา' },
+            { art: '💎', c: 'ส', v: 'ใ', word: 'ใส', phonics: 'สอ ใอ ใส' },
+            { art: 'สา', c: 'ส', v: 'า', word: 'สา', phonics: 'สอ อา สา' },
+
+            // ห (4 คำ)
+            { art: '👂', c: 'ห', v: 'ู', word: 'หู', phonics: 'หอ อู หู' },
+            { art: '💧', c: 'ห', v: 'า', word: 'หา', phonics: 'หอ อา หา' },
+            { art: '🏺', c: 'ห', v: 'ไ', word: 'ไห', phonics: 'หอ ไอ ไห' },
+            { art: 'เหา', c: 'ห', v: 'เ-า', word: 'เหา', phonics: 'หอ เอา เหา' },
+
+            // ฬ (2 คำ)
+            { art: '🪁', c: 'ฬ', v: 'า', word: 'ฬา', phonics: 'ลอ อา ฬา' },
+            { art: '🪁', c: 'ฬ', v: 'ี', word: 'ฬี', phonics: 'ลอ อี ฬี' },
+
+            // อ (4 คำ)
+            { art: '👨', c: 'อ', v: 'า', word: 'อา', phonics: 'ออ อา อา' },
+            { art: '🐦', c: 'อ', v: 'ี', word: 'อี', phonics: 'ออ อี อี' },
+            { art: '🐪', c: 'อ', v: 'ู', word: 'อู', phonics: 'ออ อู อู' },
+            { art: '🎁', c: 'อ', v: 'เ-า', word: 'เอา', phonics: 'ออ เอา เอา' },
+
+            // ฮ (3 คำ)
+            { art: '😄', c: 'ฮ', v: 'า', word: 'ฮา', phonics: 'ฮอ อา ฮา' },
+            { art: '🎉', c: 'ฮ', v: 'เ', word: 'เฮ', phonics: 'ฮอ เอ เฮ' },
+            { art: '😭', c: 'ฮ', v: 'โ', word: 'โฮ', phonics: 'ฮอ โอ โฮ' }
+        ];
+
+        // พยัญชนะไทยครบทั้งหมด 44 ตัว (ก-ฮ)
+        const ALL_CONSONANTS = [
+            'ก', 'ข', 'ฃ', 'ค', 'ฅ', 'ฆ',
+            'ง', 'จ', 'ฉ', 'ช', 'ซ', 'ฌ',
+            'ญ', 'ฎ', 'ฏ', 'ฐ', 'ฑ', 'ฒ',
+            'ณ', 'ด', 'ต', 'ถ', 'ท', 'ธ',
+            'น', 'บ', 'ป', 'ผ', 'ฝ', 'พ',
+            'ฟ', 'ภ', 'ม', 'ย', 'ร', 'ล',
+            'ว', 'ศ', 'ษ', 'ส', 'ห', 'ฬ',
+            'อ', 'ฮ'
+        ];
+
+        // ตารางคู่พยัญชนะรูปคล้ายกัน สำหรับระดับท้าทาย (Hard Mode)
+        const CONFUSING_PAIRS = {
+            'ก': ['ถ', 'ภ', 'ค'],
+            'ข': ['ฃ', 'ช', 'ซ'],
+            'ฃ': ['ข', 'ช', 'ซ'],
+            'ค': ['ฅ', 'ด', 'ต'],
+            'ฅ': ['ค', 'ด', 'ต'],
+            'ฆ': ['ม', 'ณ', 'ช'],
+            'ง': ['ว', 'จ', 'น'],
+            'จ': ['ฉ', 'ง', 'ฐ'],
+            'ฉ': ['จ', 'ณ', 'ถ'],
+            'ช': ['ซ', 'ข', 'ฌ'],
+            'ซ': ['ช', 'ข', 'ฌ'],
+            'ฌ': ['ช', 'ณ', 'พ'],
+            'ญ': ['ณ', 'ฎ', 'ฏ'],
+            'ฎ': ['ฏ', 'ช', 'ด'],
+            'ฏ': ['ฎ', 'ช', 'ด'],
+            'ฐ': ['ฑ', 'ฒ', 'จ'],
+            'ฑ': ['ฐ', 'ฒ', 'ท'],
+            'ฒ': ['ฑ', 'ฐ', 'ท'],
+            'ณ': ['ญ', 'ฌ', 'น'],
+            'ด': ['ต', 'ค', 'ฅ'],
+            'ต': ['ด', 'ค', 'ฅ'],
+            'ถ': ['ก', 'ภ', 'ข'],
+            'ท': ['ฑ', 'ธ', 'น'],
+            'ธ': ['ท', 'ร', 'ว'],
+            'น': ['ม', 'ท', 'ธ'],
+            'บ': ['ป', 'ผ', 'ฝ'],
+            'ป': ['บ', 'ผ', 'ฝ'],
+            'ผ': ['ฝ', 'บ', 'ป'],
+            'ฝ': ['ผ', 'ฟ', 'พ'],
+            'พ': ['ฟ', 'ภ', 'ผ'],
+            'ฟ': ['พ', 'ฝ', 'ฬ'],
+            'ภ': ['ถ', 'ก', 'พ'],
+            'ม': ['ฆ', 'น', 'ย'],
+            'ย': ['บ', 'ข', 'ม'],
+            'ร': ['ธ', 'ว', 'อ'],
+            'ล': ['ส', 'ว', 'อ'],
+            'ว': ['ร', 'ล', 'ง'],
+            'ศ': ['ค', 'ษ', 'ส'],
+            'ษ': ['บ', 'ศ', 'ส'],
+            'ส': ['ล', 'ศ', 'ษ'],
+            'ห': ['ฬ', 'บ', 'หน'],
+            'ฬ': ['ฟ', 'ห', 'จุ'],
+            'อ': ['ฮ', 'ว', 'ร'],
+            'ฮ': ['อ', 'ร', 'ว']
+        };
+
+        let currentDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+        let totalStations = 10; // 5 - 50
+        let sessionWords = [];
+        let currentQ = 0, score = 0, isLocked = false, choices = [];
+
+        const artEl = document.getElementById('target-art');
+        const lSlot = document.getElementById('letter-slot');
+        const vSlot = document.getElementById('vowel-slot');
+        const resTile = document.getElementById('result-tile');
+        const choicesRow = document.getElementById('choices-row');
+        const qEl = document.getElementById('current-q');
+        const totalQEl = document.getElementById('total-q');
+        const scoreEl = document.getElementById('score');
+        const modal = document.getElementById('victory-modal');
+        const progressFill = document.getElementById('progress-bar-fill');
+
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.type === 'TAP_CARD') check(d.index);
+            };
+        } catch(e){}
+
+        function changeDifficulty(level) {
+            currentDifficulty = level;
+            document.querySelectorAll('.level-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.level === level);
+            });
+            const labels = { easy: 'ง่าย 🌱', medium: 'ปานกลาง 🌿', hard: 'ท้าทาย 🔥' };
+            document.getElementById('current-diff-label').textContent = labels[level] || 'ปานกลาง';
+            initSession(true);
+        }
+
+        function changeStations(num) {
+            totalStations = parseInt(num, 10);
+            document.getElementById('station-slider').value = totalStations;
+            document.getElementById('slider-val').textContent = totalStations;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            initSession(true);
+        }
+
+        function onStationSlider(val) {
+            totalStations = parseInt(val, 10);
+            document.getElementById('slider-val').textContent = totalStations;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            initSession(true);
+        }
+
+        function getPoolByDifficulty() {
+            if (currentDifficulty === 'easy') {
+                // ระดับง่าย: สระพื้นฐานที่ออกเสียงง่ายชัดเจน (า, ี, ู)
+                return ALL_WORDS.filter(w => ['า', 'ี', 'ู'].includes(w.v));
+            }
+            // ปานกลางและท้าทาย: สระทั้งหมดครบ 110+ คำ
+            return ALL_WORDS;
+        }
+
+        function updateProgressBar() {
+            if (progressFill) {
+                const percent = Math.min(100, Math.round(((currentQ) / totalStations) * 100));
+                progressFill.style.width = `${percent}%`;
+            }
+        }
+
+        function initSession(resetScore = true) {
+            const pool = getPoolByDifficulty();
+            let shuffled = [];
+            while (shuffled.length < totalStations) {
+                shuffled = shuffled.concat([...pool].sort(() => 0.5 - Math.random()));
+            }
+            sessionWords = shuffled.slice(0, totalStations);
+
+            currentQ = 0;
+            if (resetScore) {
+                score = 0;
+                scoreEl.textContent = '0';
+            }
+            if (totalQEl) totalQEl.textContent = totalStations;
+            updateProgressBar();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            isLocked = false;
+            qEl.textContent = currentQ + 1;
+            totalQEl.textContent = totalStations;
+            updateProgressBar();
+
+            const item = sessionWords[currentQ];
+            artEl.textContent = item.art;
+            lSlot.textContent = '?';
+            vSlot.textContent = item.v;
+            resTile.textContent = '?';
+
+            // จำนวนตัวหลอกตามระดับความยาก:
+            // ง่าย = 2 ตัวหลอก (รวม 3 ช้อยส์)
+            // ปานกลาง = 3 ตัวหลอก (รวม 4 ช้อยส์)
+            // ท้าทาย = 4 ตัวหลอก (รวม 5 ช้อยส์ พร้อมตัวอักษรรูปคล้าย)
+            let distractorCount = 3;
+            if (currentDifficulty === 'easy') distractorCount = 2;
+            else if (currentDifficulty === 'hard') distractorCount = 4;
+
+            let wrongConsonants = [];
+            if (currentDifficulty === 'hard' && CONFUSING_PAIRS[item.c]) {
+                const confusing = CONFUSING_PAIRS[item.c].filter(c => c !== item.c);
+                const pickedConfusing = confusing.sort(() => 0.5 - Math.random()).slice(0, 2);
+                wrongConsonants.push(...pickedConfusing);
+            }
+
+            const remainingNeeded = distractorCount - wrongConsonants.length;
+            if (remainingNeeded > 0) {
+                const others = ALL_CONSONANTS
+                    .filter(c => c !== item.c && !wrongConsonants.includes(c))
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, remainingNeeded);
+                wrongConsonants.push(...others);
+            }
+
+            choices = [item.c, ...wrongConsonants].sort(() => 0.5 - Math.random());
+            choicesRow.innerHTML = '';
+            choices.forEach((c, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'phonics-btn';
+                btn.textContent = c;
+                btn.addEventListener('click', () => check(idx));
+                choicesRow.appendChild(btn);
+            });
+
+            soundManager.speakThai(`ตัวอะไรผสมกับสระ ${item.v} ได้คำว่า ${item.word} เอ่ย?`);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: choices.length,
+                    matchedPairs: currentQ,
+                    cards: choices.map((ch, i) => ({ index: i, emoji: ch, name: `ตัว ${ch}` }))
+                }));
+            }
+        }
+
+        function speakPhonics() {
+            const item = sessionWords[currentQ];
+            soundManager.speakThai(item.phonics);
+        }
+
+        function check(idx) {
+            if (isLocked) return;
+            const item = sessionWords[currentQ];
+            const btns = choicesRow.children;
+            if (choices[idx] === item.c) {
+                isLocked = true;
+                btns[idx].classList.add('correct');
+                lSlot.textContent = item.c;
+                resTile.textContent = item.word;
+
+                soundManager.playMatch();
+                soundManager.speakThai(`${item.phonics}... อ่านว่า ${item.word}! เก่งมากจ้า!`);
+                const bonus = currentDifficulty === 'hard' ? 20 : (currentDifficulty === 'medium' ? 15 : 10);
+                score += bonus;
+                scoreEl.textContent = score;
+
+                setTimeout(() => {
+                    currentQ++;
+                    updateProgressBar();
+                    if (currentQ < totalStations) {
+                        loadQuestion();
+                    } else {
+                        soundManager.playWin();
+                        document.getElementById('modal-stations-final').textContent = totalStations;
+                        document.getElementById('modal-score-final').textContent = score;
+                        modal.classList.add('active');
+                        if (ws) ws.send(JSON.stringify({ type: 'GAME_WON' }));
+                    }
+                }, 1900);
+            } else {
+                btns[idx].classList.add('wrong');
+                soundManager.playMismatch();
+                soundManager.speakThai("ยังไม่ใช่นะจ๊ะ ลองเลือกพยัญชนะอีกที!");
+                setTimeout(() => btns[idx].classList.remove('wrong'), 700);
+            }
+        }
+
+        document.getElementById('btn-restart').onclick = () => initSession(true);
+        document.getElementById('btn-play-again').onclick = () => { modal.classList.remove('active'); initSession(true); };
+        document.getElementById('btn-next-level').onclick = () => { modal.classList.remove('active'); initSession(false); };
+        document.body.onclick = () => soundManager.init();
+        initSession(true);
+    </script>
+</body>
+</html>

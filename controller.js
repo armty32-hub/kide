@@ -1,4 +1,4 @@
-// จอยสติ๊กโทรศัพท์มือถือสำหรับศูนย์รวม 20 เกม
+// จอยสติ๊กโทรศัพท์มือถือสำหรับศูนย์รวม 31 เกม
 class UniversalGameController {
     constructor() {
         this.ws = null;
@@ -60,7 +60,7 @@ class UniversalGameController {
 
     showHubView() {
         this.activeGame = 'hub';
-        this.activeGameName.textContent = 'สวนสนุก 20 เกม';
+        this.activeGameName.textContent = 'สวนสนุก 31 เกม';
         this.viewHub.classList.add('active');
         this.viewGameplay.classList.remove('active');
     }

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>นับผลไม้หรรษา - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .counter-stage {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 30px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 650px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            margin-top: 10px;
+        }
+        .orchard-box {
+            width: 100%;
+            min-height: 180px;
+            background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+            border: 4px solid #34d399;
+            border-radius: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .fruit-item {
+            font-size: 4.5rem;
+            animation: floatSlow 3s infinite ease-in-out;
+            cursor: pointer;
+            filter: drop-shadow(0 6px 6px rgba(0,0,0,0.12));
+            transition: transform 0.2s;
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .fruit-item.counted {
+            animation: bounceCount 0.4s ease;
+        }
+        @keyframes bounceCount {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .question-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #065f46;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .number-pad {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        .num-btn {
+            font-family: inherit;
+            font-size: 2.2rem;
+            font-weight: 700;
+            width: 72px;
+            height: 72px;
+            border-radius: 22px;
+            background: #ffffff;
+            border: 4px solid #a7f3d0;
+            color: #059669;
+            box-shadow: 0 6px 0 #6ee7b7, 0 8px 15px rgba(0, 0, 0, 0.08);
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .num-btn:hover {
+            transform: translateY(-3px);
+            border-color: #10b981;
+        }
+        .num-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #6ee7b7;
+        }
+        .num-btn.correct {
+            background: #34d399;
+            color: #ffffff;
+            border-color: #059669;
+            box-shadow: 0 6px 0 #047857;
+        }
+        .num-btn.wrong {
+            background: #f87171;
+            color: #ffffff;
+            border-color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🍎</span>
+            <h1 class="game-title">นับผลไม้หรรษา</h1>
+            <span class="title-emoji">🍌</span>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" title="กลับหน้าสวนสนุก 31 เกม">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-phone-connect" class="btn-icon btn-phone" title="ใช้โทรศัพท์มือถือเป็นจอยกด">
+                <span>📱</span> <span class="btn-text">ต่อจอยมือถือ</span>
+            </button>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q">1</strong> / <strong id="total-q">5</strong></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+    </div>
+
+    <main class="counter-stage">
+        <div class="question-text" id="question-label">มีผลไม้อยู่ในสวนกี่ผลเอ่ย? ช่วยนับหน่อยนะ! 🍊</div>
+        <div class="orchard-box" id="orchard-box">
+            <!-- ผลไม้จะถูกสร้างขึ้นด้วย JS -->
+        </div>
+        <div class="number-pad" id="number-pad">
+            <!-- ปุ่มตัวเลข 1..5 หรือ 1..6 -->
+        </div>
+    </main>
+
+    <!-- หน้าต่างป๊อปอัปเมื่อชนะเกม -->
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">เก่งคณิตศาสตร์ที่สุด!</h2>
+            <p class="modal-subtitle">หนูนับผลไม้ได้ถูกต้องครบทุกข้อเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <button id="btn-play-again" class="btn-play-again">
+                <span>🎮</span> เล่นอีกรอบนะ!
+            </button>
+        </div>
+    </div>
+
+    <script src="../memory-match/sounds.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>
