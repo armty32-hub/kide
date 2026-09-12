@@ -121,6 +121,16 @@ class SoundController {
         osc.stop(this.ctx.currentTime + 0.25);
     }
 
+    // เมธอดสำหรับเสียงตอบผิด / เล่นผิด (Alias ชี้ไปยัง playMismatch)
+    playWrong() {
+        this.playMismatch();
+    }
+
+    // เมธอด playError (Alias ชี้ไปยัง playWrong) เพื่อป้องกันข้อผิดพลาดกรณีเกมเรียกใช้ playError() เช่น games/alphabet-cards/index.html
+    playError() {
+        this.playWrong();
+    }
+
     // 5. เสียงเฉลิมฉลองเมื่อชนะเกม (Victory Fanfare)
     playWin() {
         if (this.muted) return;
@@ -157,17 +167,33 @@ class SoundController {
         });
     }
 
-    // เสียงพูดภาษาไทยให้กำลังใจผ่าน Web Speech API
+    // เสียงพูดภาษาไทยให้กำลังใจผ่าน Web Speech API (ปรับความเร็วให้เหมาะสมกับเด็กเล็กปฐมวัย)
     speakThai(text) {
         if (this.muted || !this.speechEnabled) return;
-        if (!('speechSynthesis' in window)) return;
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
         try {
-            window.speechSynthesis.cancel(); // ล้างคิวเสียงก่อนหน้า
+            window.speechSynthesis.cancel(); // ล้างคิวเสียงก่อนหน้า ป้องกันเสียงพูดซ้อนทับกันเมื่อเด็กแตะปุ่มถี่ๆ
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'th-TH';
-            utterance.rate = 1.05; // เร่งความเร็วเล็กน้อยให้สดใสร่าเริง
-            utterance.pitch = 1.25; // เสียงสูงสดใสเหมาะกับเด็ก
+
+            // R1: ปรับลดความเร็วลงมาที่ 0.86 (ช่วง 0.85 - 0.88) เพื่อให้เด็กเล็กปฐมวัย (2-6 ขวบ) ฟังทัน ชัดถ้อยชัดคำ จังหวะเว้นวรรคเป็นมิตร
+            utterance.rate = 0.86;
+
+            // รักษาระดับเสียงให้นุ่มนวล สดใส เป็นมิตร (1.25) โทนเสียงสูงน่าฟัง ไม่แหลมหรือต่ำเกินไป
+            utterance.pitch = 1.25;
+
+            // ค้นหาเสียงภาษาไทยที่ติดตั้งอยู่ในระบบเพื่อความแม่นยำในการออกเสียงสูงสุด
+            if (typeof window.speechSynthesis.getVoices === 'function') {
+                const voices = window.speechSynthesis.getVoices();
+                if (Array.isArray(voices) && voices.length > 0) {
+                    const thaiVoice = voices.find(v => v && (v.lang === 'th-TH' || (typeof v.lang === 'string' && v.lang.startsWith('th'))));
+                    if (thaiVoice) {
+                        utterance.voice = thaiVoice;
+                    }
+                }
+            }
+
             window.speechSynthesis.speak(utterance);
         } catch (e) {
             console.log('Speech synthesis error:', e);
@@ -177,3 +203,11 @@ class SoundController {
 
 // ส่งออกออบเจกต์ระบบเสียง
 const soundManager = new SoundController();
+
+if (typeof window !== 'undefined') {
+    window.soundManager = soundManager;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { SoundController, soundManager, SoundManager: SoundController };
+}

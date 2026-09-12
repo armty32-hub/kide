@@ -3,86 +3,1087 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎪 สวนสนุกเสริมพัฒนาการ 20 เกมสำหรับเด็ก</title>
-    <link rel="stylesheet" href="hub.css">
-    <link rel="stylesheet" href="style.css">
+    <title>AR Math Challenge บวกเลขขยับตัว - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        :root {
+            --ar-glow: rgba(56, 189, 248, 0.6);
+            --bubble-left-color: #38bdf8;
+            --bubble-right-color: #f472b6;
+        }
+
+        .ar-stage-container {
+            width: 100%;
+            max-width: 860px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        /* ป้ายสมการคณิตศาสตร์ด้านบน */
+        .equation-banner {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 32px;
+            border-radius: 40px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            border: 4px solid #bae6fd;
+            animation: bannerPulse 3s infinite ease-in-out;
+        }
+
+        @keyframes bannerPulse {
+            0%, 100% { transform: scale(1); border-color: #bae6fd; }
+            50% { transform: scale(1.02); border-color: #7dd3fc; }
+        }
+
+        .equation-text {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #0369a1;
+            letter-spacing: 2px;
+            text-shadow: 1px 1px 0 #fff;
+        }
+
+        .equation-prompt {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0284c7;
+            background: #e0f2fe;
+            padding: 4px 14px;
+            border-radius: 20px;
+        }
+
+        /* กรอบแสดง Canvas และวิดีโอกล้อง */
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 800 / 480;
+            background: #0f172a;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+            border: 6px solid #ffffff;
+            touch-action: none;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        /* ป้ายแจ้งเตือนโหมดสำรอง (Fallback Indicator) */
+        .fallback-pill {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.85);
+            color: #f8fafc;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+            backdrop-filter: blur(6px);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        /* แถบเลือกความยากและจำนวนข้อ */
+        .selector-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 4px;
+            border-radius: 40px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .selector-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #475569;
+            padding-left: 10px;
+        }
+
+        .cam-badge-active {
+            background: #dcfce7 !important;
+            color: #15803d !important;
+        }
+
+        .cam-badge-active .dot-status {
+            background: #22c55e !important;
+            box-shadow: 0 0 8px #22c55e;
+        }
+
+        @media (max-width: 640px) {
+            .equation-text {
+                font-size: 1.6rem;
+            }
+            .equation-prompt {
+                display: none;
+            }
+            .fallback-pill {
+                font-size: 0.82rem;
+                padding: 6px 14px;
+                white-space: normal;
+                text-align: center;
+                width: 90%;
+            }
+            .controls-container {
+                gap: 8px;
+            }
+            .btn-level {
+                padding: 6px 12px;
+                font-size: 0.88rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ส่วนหัวแดชบอร์ด -->
-    <header class="hub-header">
-        <div class="hub-title-card">
-            <span style="font-size: 2.5rem;">🎪</span>
-            <h1 class="hub-title">สวนสนุกเสริมพัฒนาการ</h1>
-            <span style="font-size: 2.5rem;">🚀</span>
+    <!-- หัวข้อเกม -->
+    <header class="header">
+        <div class="title-container">
+            <span class="title-emoji">🫧</span>
+            <h1 class="game-title">AR Math Challenge บวกเลขขยับตัว</h1>
+            <span class="title-emoji">➕</span>
         </div>
-        <p class="hub-subtitle">ศูนย์รวม 20 เกมพัฒนาสมอง สมาธิ และกล้ามเนื้อมือ สำหรับเด็กไม่เกิน 6 ขวบ ✨</p>
     </header>
 
-    <!-- แถบเครื่องมือและตัวกรองหมวดหมู่ -->
-    <div class="hub-toolbar">
-        <div class="category-filter-bar">
-            <button class="cat-btn active" data-cat="all">🌟 ทั้งหมด (30)</button>
-            <button class="cat-btn" data-cat="thai">📖 ภาษาไทย & นิทาน (6)</button>
-            <button class="cat-btn" data-cat="math">➕ บวกเลข & คณิต (8)</button>
-            <button class="cat-btn" data-cat="memory">🧠 ความจำ & สังเกต (4)</button>
-            <button class="cat-btn" data-cat="colors">🎨 สีสัน & จำแนก (4)</button>
-            <button class="cat-btn" data-cat="motor">⚡ กล้ามเนื้อมือ & ตา (4)</button>
-            <button class="cat-btn" data-cat="creativity">🎵 ดนตรี & ศิลปะ (4)</button>
+    <!-- แถบควบคุม: เลือกระดับความยาก จำนวนข้อ และปุ่มแอ็กชัน -->
+    <div class="controls-container">
+        <!-- เลือกระดับความยาก (Difficulty: easy, medium, hard) -->
+        <div class="selector-group">
+            <span class="selector-label">ความยาก:</span>
+            <div class="level-selector" role="group" aria-label="เลือกระดับความยาก">
+                <button class="btn-level btn-diff active" data-diff="easy">🌱 ง่าย (1-5)</button>
+                <button class="btn-level btn-diff" data-diff="medium">⭐ ปานกลาง (1-10)</button>
+                <button class="btn-level btn-diff" data-diff="hard">🚀 ท้าทาย (1-15)</button>
+            </div>
         </div>
 
-        <div class="hub-actions">
-            <!-- สถานะจอยมือถือ -->
-            <span class="phone-badge" id="phone-badge">
-                <span class="dot-status"></span>
-                <span id="phone-status-text">รอต่อจอยมือถือ...</span>
-            </span>
-            <button id="btn-phone-connect" class="btn-icon btn-phone" title="ใช้มือถือเป็นจอยกด">
-                <span>📱</span> <span>ต่อจอยมือถือ</span>
+        <!-- เลือกจำนวนข้อ (5, 10, 20 ข้อ) -->
+        <div class="selector-group">
+            <span class="selector-label">จำนวน:</span>
+            <div class="level-selector" role="group" aria-label="เลือกจำนวนข้อ">
+                <button class="btn-level btn-q active" data-q="5">5 ข้อ</button>
+                <button class="btn-level btn-q" data-q="10">10 ข้อ</button>
+                <button class="btn-level btn-q" data-q="20">20 ข้อ</button>
+            </div>
+        </div>
+
+        <!-- ปุ่มคำสั่งทั่วไป -->
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" id="btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-toggle-cam" class="btn-icon" title="เปิด/ปิดกล้อง">
+                <span>📹</span> <span class="btn-text" id="cam-btn-text">โหมดกล้อง AR</span>
+            </button>
+            <button id="btn-phone-connect" class="btn-icon btn-phone" title="ต่อจอยมือถือ">
+                <span>📱</span> <span class="btn-text">ต่อจอยมือถือ</span>
+            </button>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
             </button>
         </div>
     </div>
 
-    <!-- กริดแสดงการ์ดทั้ง 20 เกม -->
-    <main class="games-grid" id="games-grid">
-        <!-- เกมจะถูกสร้างโดย hub.js จาก gamesData.js -->
+    <!-- แถบสถานะความคืบหน้า คะแนน เวลา และสถานะกล้อง -->
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-icon">⭐</span>
+            <span>ข้อที่: <strong id="current-q-num">1</strong> / <strong id="total-q-num">5</strong></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">🏆</span>
+            <span>คะแนน: <strong id="score-val">0</strong></span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">⏱️</span>
+            <span>เวลา: <strong id="timer-val">00:00</strong></span>
+        </div>
+        <div class="status-item">
+            <span id="cam-status-badge" class="phone-badge">
+                <span class="dot-status"></span>
+                <span id="cam-status-text">โหมดสัมผัส & คลิก</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- เวทีเกม AR และแคนวาสตรวจจับการเคลื่อนไหว -->
+    <main class="ar-stage-container">
+        <!-- ป้ายโจทย์บวกเลขด้านบน -->
+        <div class="equation-banner">
+            <span class="equation-text" id="math-equation">1 + 2 = ?</span>
+            <span class="equation-prompt">ขยับตัวหรือแตะฟองสบู่คำตอบ!</span>
+        </div>
+
+        <!-- กรอบแคนวาสแสดงภาพกล้องและฟองสบู่คำตอบ -->
+        <div class="canvas-wrapper" id="canvas-wrapper">
+            <!-- วิดีโอกล้องต้นฉบับ (ซ่อนไว้เพื่อนำภาพไปเรนเดอร์กลับด้านบน Canvas) -->
+            <video id="ar-video" playsinline webkit-playsinline muted autoplay style="display:none;"></video>
+            <!-- แคนวาสหลักสำหรับแสดงผลเกมและตรวจจับการแตะ -->
+            <canvas id="game-canvas" width="800" height="480"></canvas>
+            <!-- แคนวาสขนาดเล็ก (80x60) สำหรับวิเคราะห์ Frame Differencing ในหน่วยความจำ -->
+            <canvas id="motion-canvas" width="80" height="60" style="display:none;"></canvas>
+
+            <!-- แถบแจ้งเตือนโหมดสัมผัส / โหมดสำรอง -->
+            <div id="fallback-pill" class="fallback-pill">
+                <span>👆</span>
+                <span id="fallback-pill-text">โหมดสัมผัส & คลิก: แตะฟองสบู่คำตอบได้โดยตรง หรือกดลูกศรซ้าย/ขวาได้เลยจ้า</span>
+            </div>
+        </div>
     </main>
 
-    <!-- Fullscreen Game Modal (เล่นเกมข้างในนี้ได้เลยโดยไม่ต้องโหลดหน้าใหม่) -->
-    <div id="game-modal" class="game-frame-modal">
-        <div class="frame-top-bar">
-            <div class="frame-game-title" id="frame-title">🎮 กำลังเปิดเกม...</div>
-            <button class="btn-exit-game" id="btn-exit-game">
-                <span>🏠</span> กลับสวนสนุก (เลือกเกมใหม่)
-            </button>
-        </div>
-        <iframe id="game-iframe" class="game-iframe" src="about:blank"></iframe>
-    </div>
-
-    <!-- หน้าต่าง QR Code ต่อมือถือ -->
-    <div id="qr-modal" class="modal-overlay">
+    <!-- ป๊อปอัป QR Code สำหรับเชื่อมต่อจอยมือถือ -->
+    <div id="qr-modal" class="modal-overlay" role="dialog" aria-modal="true">
         <div class="modal-content qr-content">
             <button class="btn-close-modal" id="btn-close-qr">✕</button>
             <div class="qr-header">
                 <span class="qr-icon">📱</span>
                 <h2>ใช้มือถือเป็นจอยกด</h2>
             </div>
-            <p class="qr-desc">ใช้กล้องโทรศัพท์มือถือสแกน QR Code ด้านล่างนี้ได้เลยครับ (ต่อ Wi-Fi เดียวกัน)</p>
+            <p class="qr-desc">ใช้กล้องโทรศัพท์มือถือสแกน QR Code ด้านล่างนี้เพื่อเปิดจอยกดบวกเลข</p>
             <div class="qr-image-container">
                 <img id="qr-image" src="" alt="QR Code สำหรับต่อมือถือ" style="display:none;">
-                <div id="qr-loading" class="qr-loading">กำลังสร้าง QR Code...</div>
+                <div id="qr-loading" class="qr-loading">กำลังโหลด QR Code...</div>
             </div>
             <div class="qr-url-box">
                 <span class="url-label">หรือเปิดผ่านลิงก์นี้ในมือถือ:</span>
                 <a id="qr-link" href="#" target="_blank" class="url-link">-</a>
             </div>
             <div class="qr-tips">
-                💡 <strong>เคล็ดลับ:</strong> เมื่อเชื่อมต่อแล้ว น้องๆ สามารถเลือกเกมและกดปุ่มจากมือถือเพื่อเล่นเกมบนจอโน้ตบุ๊กได้ทันที!
+                💡 <strong>วิธีเล่นผ่านมือถือ:</strong> มือถือจะแสดงปุ่มคำตอบ 2 ปุ่ม (ฟองซ้าย และ ฟองขวา) ให้น้องๆ กดเลือกคำตอบได้ทันที!
             </div>
         </div>
     </div>
 
-    <script src="gamesData.js"></script>
-    <script src="hub.js"></script>
+    <!-- ป๊อปอัปฉลองชัยชนะ (Victory Modal) -->
+    <div id="victory-modal" class="modal-overlay" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">สุดยอดอัจฉริยะคณิตศาสตร์!</h2>
+            <p class="modal-subtitle">หนูขยับตัวบวกเลขได้ถูกต้องครบทุกข้อเลย เก่งมากๆ ครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div class="victory-stats" style="margin-bottom: 20px; font-size: 1.2rem; color: #1e293b; font-weight: 700;">
+                คะแนนรวม: <strong id="final-score" style="color: #0284c7;">0</strong> แต้ม | เวลา: <strong id="final-time" style="color: #10b981;">00:00</strong>
+            </div>
+            <button id="btn-play-again" class="btn-play-again">
+                <span>🎮</span> เล่นอีกรอบนะ!
+            </button>
+        </div>
+    </div>
+
+    <!-- ไลบรารีเสียงและระบบสังเคราะห์เสียงภาษาไทย -->
+    <script src="../../sounds.js"></script>
+
+    <!-- สคริปต์การทำงานของเกม AR Math Challenge -->
+    <script>
+        (function () {
+            // ----------------------------------------------------------------
+            // 1. ตัวแปรสถานะหลักของเกม (Game State)
+            // ----------------------------------------------------------------
+            let difficulty = 'easy'; // 'easy' (1-5), 'medium' (1-10), 'hard' (1-15)
+            let totalQuestions = 5;  // 5, 10, 20 ข้อ
+            let currentQuestion = 0; // ลำดับข้อปัจจุบัน (0-indexed)
+            let score = 0;
+            let streak = 0;
+            let canAnswer = true;
+            let isLocked = false;
+            let isWon = false;
+
+            // ตัวจับเวลา
+            let startTime = 0;
+            let elapsedSeconds = 0;
+            let timerInterval = null;
+
+            // สถานะโจทย์ปัจจุบัน
+            let currentProblem = null;
+
+            // ----------------------------------------------------------------
+            // 2. ตัวแปรสำหรับระบบกล้อง และ Motion Detection (Canvas Frame Difference)
+            // ----------------------------------------------------------------
+            let cameraActive = false;
+            let currentStream = null;
+            const videoEl = document.getElementById('ar-video');
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Offscreen Canvas (80x60) สำหรับวิเคราะห์ความแตกต่างของเฟรม (Frame Difference)
+            const motionCanvas = document.getElementById('motion-canvas');
+            const motionCtx = motionCanvas.getContext('2d', { willReadFrequently: true });
+            let prevFrameData = null;
+
+            // ----------------------------------------------------------------
+            // 3. โมเดลฟองสบู่คำตอบ (Bubbles Model) และอนุภาค (Particles)
+            // ----------------------------------------------------------------
+            const bubbleLeft = {
+                x: 200,
+                y: 260,
+                baseY: 260,
+                radius: 80,
+                pulse: 0,
+                value: 0,
+                isPopping: false,
+                popScale: 1,
+                motionScore: 0,
+                color: '#0284c7',
+                label: 'ฟองซ้าย'
+            };
+
+            const bubbleRight = {
+                x: 600,
+                y: 260,
+                baseY: 260,
+                radius: 80,
+                pulse: 0,
+                value: 0,
+                isPopping: false,
+                popScale: 1,
+                motionScore: 0,
+                color: '#db2777',
+                label: 'ฟองขวา'
+            };
+
+            let particles = [];
+
+            // Background floating bubble decorations for fallback mode
+            const bgBubbles = [];
+            for (let i = 0; i < 18; i++) {
+                bgBubbles.push({
+                    x: Math.random() * 800,
+                    y: Math.random() * 480,
+                    radius: Math.random() * 22 + 8,
+                    speedY: Math.random() * 0.8 + 0.3,
+                    wobbleSpeed: Math.random() * 0.02 + 0.01,
+                    wobbleAmp: Math.random() * 20 + 5,
+                    phase: Math.random() * Math.PI * 2,
+                    hue: Math.floor(Math.random() * 360),
+                    alpha: Math.random() * 0.35 + 0.15
+                });
+            }
+
+            // ----------------------------------------------------------------
+            // 4. WebSocket Mobile Controller
+            // ----------------------------------------------------------------
+            let ws = null;
+
+            function initWebSocket() {
+                try {
+                    const host = location.host || 'localhost:3001';
+                    ws = new WebSocket(`ws://${host}`);
+                    ws.onopen = function () {
+                        ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+                        syncControllerState();
+                    };
+                    ws.onmessage = function (event) {
+                        try {
+                            const data = JSON.parse(event.data);
+                            if (data.type === 'TAP_CARD') {
+                                handleChoice(data.index);
+                            } else if (data.type === 'RESTART') {
+                                restartGame();
+                            } else if (data.type === 'REQUEST_STATE') {
+                                syncControllerState();
+                            }
+                        } catch (err) {}
+                    };
+                    ws.onerror = function () {};
+                    ws.onclose = function () {};
+                } catch (e) {
+                    console.warn('WebSocket connection not available:', e);
+                }
+            }
+
+            function syncControllerState() {
+                if (ws && ws.readyState === WebSocket.OPEN && currentProblem) {
+                    ws.send(JSON.stringify({
+                        type: 'SYNC_STATE',
+                        title: 'AR Math Challenge',
+                        question: `${currentProblem.numA} + ${currentProblem.numB} = ?`,
+                        pairs: totalQuestions,
+                        matchedPairs: currentQuestion,
+                        cards: [
+                            { index: 0, emoji: '🫧', name: `ฟองซ้าย: ${currentProblem.choices[0]}`, text: `${currentProblem.choices[0]}` },
+                            { index: 1, emoji: '🫧', name: `ฟองขวา: ${currentProblem.choices[1]}`, text: `${currentProblem.choices[1]}` }
+                        ]
+                    }));
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // 5. ระบบกล้อง Web Camera API & Graceful Fallback
+            // ----------------------------------------------------------------
+            function isCameraSupported() {
+                return !!(
+                    navigator.mediaDevices &&
+                    typeof navigator.mediaDevices.getUserMedia === 'function'
+                );
+            }
+
+            async function initCamera() {
+                if (!isCameraSupported()) {
+                    activateFallbackMode("เบราว์เซอร์ไม่รองรับกล้องในโหมดนี้ สลับเป็นโหมดแตะสัมผัสจ้า");
+                    return;
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        frameRate: { ideal: 30, max: 30 }
+                    },
+                    audio: false
+                };
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    currentStream = stream;
+                    videoEl.srcObject = stream;
+                    await videoEl.play();
+                    cameraActive = true;
+                    updateCameraUI(true);
+                } catch (err) {
+                    console.warn("Camera init error caught:", err.name, err.message);
+                    cameraActive = false;
+                    let msg = "ไม่สามารถเปิดกล้องได้ สลับเป็นโหมดแตะสัมผัสให้แล้วนะจ๊ะ!";
+                    if (err.name === 'NotAllowedError') {
+                        msg = "ไม่ได้อนุญาตให้ใช้กล้อง หนูสามารถแตะหรือคลิกฟองสบู่เพื่อเล่นได้เลย!";
+                    } else if (err.name === 'NotFoundError') {
+                        msg = "ไม่พบอุปกรณ์กล้องในเครื่อง สลับเป็นโหมดแตะสัมผัสจ้า";
+                    }
+                    activateFallbackMode(msg);
+                }
+            }
+
+            function stopCamera() {
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                    currentStream = null;
+                }
+                cameraActive = false;
+                updateCameraUI(false);
+            }
+
+            function toggleCamera() {
+                if (cameraActive) {
+                    stopCamera();
+                    activateFallbackMode("ปิดกล้องแล้ว สลับเป็นโหมดแตะสัมผัสและจอยมือถือจ้า");
+                } else {
+                    initCamera().catch(() => {
+                        activateFallbackMode("ไม่สามารถเปิดกล้องได้ สลับเป็นโหมดสัมผัสจ้า");
+                    });
+                }
+            }
+
+            function updateCameraUI(active) {
+                const badge = document.getElementById('cam-status-badge');
+                const badgeText = document.getElementById('cam-status-text');
+                const btnText = document.getElementById('cam-btn-text');
+                const fallbackPill = document.getElementById('fallback-pill');
+
+                if (active) {
+                    badge.className = 'phone-badge cam-badge-active';
+                    badgeText.textContent = '📹 โหมดกล้อง AR ขยับตัว';
+                    btnText.textContent = 'ปิดกล้อง';
+                    fallbackPill.style.display = 'none';
+                } else {
+                    badge.className = 'phone-badge';
+                    badgeText.textContent = '👆 โหมดสัมผัส & คลิก';
+                    btnText.textContent = 'เปิดกล้อง AR';
+                    fallbackPill.style.display = 'flex';
+                }
+            }
+
+            function activateFallbackMode(notice) {
+                cameraActive = false;
+                updateCameraUI(false);
+                const pillText = document.getElementById('fallback-pill-text');
+                if (notice && pillText) {
+                    pillText.textContent = notice;
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // 6. ระบบสร้างโจทย์คณิตศาสตร์ (Math Addition Question Generator)
+            // ----------------------------------------------------------------
+            function generateProblem(diff) {
+                let minA = 1, maxA = 3, minB = 1, maxB = 2;
+                if (diff === 'medium') {
+                    minA = 2; maxA = 5; minB = 2; maxB = 5;
+                } else if (diff === 'hard') {
+                    minA = 3; maxA = 8; minB = 3; maxB = 7;
+                }
+
+                const numA = Math.floor(Math.random() * (maxA - minA + 1)) + minA;
+                const numB = Math.floor(Math.random() * (maxB - minB + 1)) + minB;
+                const correctSum = numA + numB;
+
+                // สร้างตัวเลือกหลอก (Distractor) ที่สมเหตุสมผล (+1, -1, +2, -2) และต้อง >= 1
+                const offsets = [-2, -1, 1, 2].sort(() => 0.5 - Math.random());
+                let distractor = correctSum + offsets[0];
+                if (distractor < 1 || distractor === correctSum) {
+                    distractor = correctSum + offsets[1];
+                }
+                if (distractor < 1 || distractor === correctSum) {
+                    distractor = correctSum + (Math.random() > 0.5 ? 1 : 2);
+                }
+                if (distractor < 1) distractor = correctSum + 1;
+
+                // สุ่มตำแหน่งคำตอบถูก: 0 = ฟองซ้าย, 1 = ฟองขวา
+                const correctIndex = Math.random() < 0.5 ? 0 : 1;
+                const choices = correctIndex === 0
+                    ? [correctSum, distractor]
+                    : [distractor, correctSum];
+
+                return { numA, numB, correctSum, choices, correctIndex };
+            }
+
+            function loadNextQuestion() {
+                canAnswer = true;
+                isLocked = false;
+
+                currentProblem = generateProblem(difficulty);
+                bubbleLeft.value = currentProblem.choices[0];
+                bubbleRight.value = currentProblem.choices[1];
+                bubbleLeft.isPopping = false;
+                bubbleRight.isPopping = false;
+                bubbleLeft.popScale = 1;
+                bubbleRight.popScale = 1;
+
+                // อัปเดต UI หน้าจอ
+                document.getElementById('current-q-num').textContent = currentQuestion + 1;
+                document.getElementById('total-q-num').textContent = totalQuestions;
+                document.getElementById('math-equation').textContent = `${currentProblem.numA} + ${currentProblem.numB} = ?`;
+
+                // เสียงพูดโจทย์ภาษาไทย
+                soundManager.speakThai(`ข้อที่ ${currentQuestion + 1}: ${currentProblem.numA} บวก ${currentProblem.numB} ได้เท่าไหร่เอ่ย? ขยับตัวไปแตะฟองสบู่เลย!`);
+
+                // ซิงก์ข้อมูลไปยังจอยมือถือ
+                syncControllerState();
+            }
+
+            // ----------------------------------------------------------------
+            // 7. การประมวลผลคำตอบ (Unified Input Convergence: handleChoice)
+            // ----------------------------------------------------------------
+            function handleChoice(choiceIndex) {
+                // ป้องกันการกดซ้ำซ้อนขณะประมวลผล (Rapid click prevention)
+                if (!canAnswer || isLocked || isWon) return;
+                canAnswer = false;
+                isLocked = true;
+
+                const isCorrect = (choiceIndex === currentProblem.correctIndex);
+                const chosenBubble = (choiceIndex === 0) ? bubbleLeft : bubbleRight;
+
+                if (isCorrect) {
+                    // คำนวณคะแนนและสตรีค
+                    score += 10 + (streak * 2);
+                    streak++;
+                    document.getElementById('score-val').textContent = score;
+
+                    // ป๊อปฟองสบู่และสร้างอนุภาคระเบิด
+                    chosenBubble.isPopping = true;
+                    spawnParticles(chosenBubble.x, chosenBubble.y, chosenBubble.color);
+
+                    soundManager.playMatch();
+                    const cheers = [
+                        `ถูกต้องแล้วจ้า! เก่งมาก! ${currentProblem.numA} บวก ${currentProblem.numB} ได้ ${currentProblem.correctSum}!`,
+                        `ยอดเยี่ยมไปเลย! คำตอบคือ ${currentProblem.correctSum} ถูกต้องครับ!`,
+                        `โป๊ะ! ป๊อปฟองสบู่แตกกระจายเลย เก่งที่สุด!`
+                    ];
+                    soundManager.speakThai(cheers[Math.floor(Math.random() * cheers.length)]);
+
+                    setTimeout(() => {
+                        currentQuestion++;
+                        if (currentQuestion < totalQuestions) {
+                            loadNextQuestion();
+                        } else {
+                            finishGame();
+                        }
+                    }, 1700);
+                } else {
+                    // ตอบผิด: สั่นฟองสบู่และแจ้งให้ลองใหม่
+                    streak = 0;
+                    if (typeof soundManager.playError === 'function') {
+                        soundManager.playError();
+                    } else {
+                        soundManager.playMismatch();
+                    }
+
+                    const retries = [
+                        "ยังไม่ใช่นะจ๊ะ ลองเอี้ยวตัวไปดูอีกข้างนึงนะ!",
+                        "ลองบวกเลขใหม่อีกทีจ้า สู้ๆ นะ!",
+                        "ยังไม่ใช่จ้า ลองแตะอีกฟองนึงนะ!"
+                    ];
+                    soundManager.speakThai(retries[Math.floor(Math.random() * retries.length)]);
+
+                    // ปลดล็อกให้ลองใหม่ได้หลัง 1 วินาที
+                    setTimeout(() => {
+                        canAnswer = true;
+                        isLocked = false;
+                    }, 1000);
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // 8. การตรวจจับการเคลื่อนไหวผ่าน Canvas Frame Differencing
+            // ----------------------------------------------------------------
+            function processMotionDetection() {
+                if (!cameraActive || videoEl.readyState < 2) return;
+
+                // วาดภาพกล้องลงในแคนวาสจำลองขนาด 80x60 (กลับด้านซ้ายขวา)
+                motionCtx.save();
+                motionCtx.translate(80, 0);
+                motionCtx.scale(-1, 1);
+                motionCtx.drawImage(videoEl, 0, 0, 80, 60);
+                motionCtx.restore();
+
+                const frameData = motionCtx.getImageData(0, 0, 80, 60);
+                const data = frameData.data;
+
+                if (prevFrameData) {
+                    let leftMotion = 0;
+                    let rightMotion = 0;
+                    const diffThreshold = 28;
+
+                    // โซนฟองซ้าย: x ∈ [4, 36], y ∈ [15, 48]
+                    // โซนฟองขวา: x ∈ [44, 76], y ∈ [15, 48]
+                    for (let y = 15; y <= 48; y++) {
+                        for (let x = 4; x <= 36; x++) {
+                            const idx = (y * 80 + x) * 4;
+                            const diff = Math.abs(data[idx] - prevFrameData[idx]) +
+                                         Math.abs(data[idx + 1] - prevFrameData[idx + 1]) +
+                                         Math.abs(data[idx + 2] - prevFrameData[idx + 2]);
+                            if (diff > diffThreshold * 3) {
+                                leftMotion++;
+                            }
+                        }
+                        for (let x = 44; x <= 76; x++) {
+                            const idx = (y * 80 + x) * 4;
+                            const diff = Math.abs(data[idx] - prevFrameData[idx]) +
+                                         Math.abs(data[idx + 1] - prevFrameData[idx + 1]) +
+                                         Math.abs(data[idx + 2] - prevFrameData[idx + 2]);
+                            if (diff > diffThreshold * 3) {
+                                rightMotion++;
+                            }
+                        }
+                    }
+
+                    const zonePixels = (36 - 4 + 1) * (48 - 15 + 1); // 1,122 พิกเซล
+                    const leftScore = leftMotion / zonePixels;
+                    const rightScore = rightMotion / zonePixels;
+
+                    bubbleLeft.motionScore = leftScore;
+                    bubbleRight.motionScore = rightScore;
+
+                    // หากตรวจพบการเคลื่อนไหวเกินเกณฑ์ (threshold >= 0.12) และไม่ได้ถูกล็อก
+                    if (canAnswer && !isLocked && !isWon) {
+                        const motionThreshold = 0.12;
+                        if (leftScore > motionThreshold && leftScore > rightScore + 0.05) {
+                            handleChoice(0);
+                        } else if (rightScore > motionThreshold && rightScore > leftScore + 0.05) {
+                            handleChoice(1);
+                        }
+                    }
+                }
+
+                prevFrameData = new Uint8ClampedArray(data);
+            }
+
+            // ----------------------------------------------------------------
+            // 9. ระบบอนุภาคและแอนิเมชัน (Particle & Canvas Render Loop)
+            // ----------------------------------------------------------------
+            class Particle {
+                constructor(x, y, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.color = color;
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 8 + 3;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed - 2;
+                    this.radius = Math.random() * 7 + 4;
+                    this.alpha = 1.0;
+                    this.decay = Math.random() * 0.02 + 0.02;
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    this.vy += 0.22; // แรงโน้มถ่วง
+                    this.alpha = Math.max(0, this.alpha - this.decay);
+                    this.radius = Math.max(0, this.radius - 0.08);
+                }
+                draw(c) {
+                    if (this.alpha <= 0 || this.radius <= 0) return;
+                    c.save();
+                    c.globalAlpha = this.alpha;
+                    c.fillStyle = this.color;
+                    c.beginPath();
+                    c.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    c.fill();
+                    c.restore();
+                }
+            }
+
+            function spawnParticles(x, y, primaryColor) {
+                const palette = [primaryColor, '#fde047', '#38bdf8', '#4ade80', '#fb7185', '#ffffff'];
+                for (let i = 0; i < 36; i++) {
+                    const col = palette[Math.floor(Math.random() * palette.length)];
+                    particles.push(new Particle(x, y, col));
+                }
+            }
+
+            function drawFallbackBackground(c, time) {
+                // ไล่เฉดสีพื้นหลังแบบเกมเด็กสดใส
+                const grad = c.createLinearGradient(0, 0, 800, 480);
+                grad.addColorStop(0, '#0f172a');
+                grad.addColorStop(0.5, '#1e293b');
+                grad.addColorStop(1, '#0c4a6e');
+                c.fillStyle = grad;
+                c.fillRect(0, 0, 800, 480);
+
+                // วาดฟองสบู่ลอยประดับพื้นหลัง
+                bgBubbles.forEach(b => {
+                    b.y -= b.speedY;
+                    if (b.y < -30) b.y = 510;
+                    const wobbleX = b.x + Math.sin(time * b.wobbleSpeed + b.phase) * b.wobbleAmp;
+
+                    c.save();
+                    c.globalAlpha = b.alpha;
+                    c.fillStyle = `hsla(${b.hue}, 80%, 70%, 0.4)`;
+                    c.strokeStyle = `hsla(${b.hue}, 80%, 90%, 0.6)`;
+                    c.lineWidth = 2;
+                    c.beginPath();
+                    c.arc(wobbleX, b.y, b.radius, 0, Math.PI * 2);
+                    c.fill();
+                    c.stroke();
+                    c.restore();
+                });
+            }
+
+            function drawBubble(c, b, isLeft, time) {
+                if (b.isPopping) {
+                    b.popScale += 0.08;
+                    if (b.popScale > 1.6) return;
+                }
+
+                c.save();
+                c.translate(b.x, b.y);
+                c.scale(b.popScale, b.popScale);
+
+                // วาดวงแหวนตรวจจับการเคลื่อนไหว (Hotspot Aura)
+                const auraIntensity = Math.min(1, b.motionScore * 4);
+                c.beginPath();
+                c.arc(0, 0, b.radius + 18 + Math.sin(time * 0.006) * 4, 0, Math.PI * 2);
+                c.strokeStyle = isLeft
+                    ? `rgba(56, 189, 248, ${0.25 + auraIntensity * 0.6})`
+                    : `rgba(244, 114, 182, ${0.25 + auraIntensity * 0.6})`;
+                c.lineWidth = 5 + auraIntensity * 6;
+                c.stroke();
+
+                // วาดตัวฟองสบู่หลัก (Glassmorphic Bubble)
+                const grad = c.createRadialGradient(-b.radius * 0.3, -b.radius * 0.3, b.radius * 0.1, 0, 0, b.radius);
+                if (isLeft) {
+                    grad.addColorStop(0, 'rgba(186, 230, 253, 0.95)');
+                    grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.85)');
+                    grad.addColorStop(1, 'rgba(2, 132, 199, 0.75)');
+                } else {
+                    grad.addColorStop(0, 'rgba(251, 207, 232, 0.95)');
+                    grad.addColorStop(0.5, 'rgba(244, 114, 182, 0.85)');
+                    grad.addColorStop(1, 'rgba(190, 24, 93, 0.75)');
+                }
+
+                c.fillStyle = grad;
+                c.shadowColor = isLeft ? 'rgba(2, 132, 199, 0.5)' : 'rgba(190, 24, 93, 0.5)';
+                c.shadowBlur = 18;
+                c.beginPath();
+                c.arc(0, 0, b.radius, 0, Math.PI * 2);
+                c.fill();
+
+                // เส้นขอบฟองประกาย
+                c.shadowBlur = 0;
+                c.strokeStyle = '#ffffff';
+                c.lineWidth = 4;
+                c.stroke();
+
+                // แสงสะท้อนทรงเสี้ยว (Specular Reflection Arc)
+                c.beginPath();
+                c.ellipse(-b.radius * 0.35, -b.radius * 0.35, b.radius * 0.3, b.radius * 0.16, -Math.PI / 4, 0, Math.PI * 2);
+                c.fillStyle = 'rgba(255, 255, 255, 0.65)';
+                c.fill();
+
+                // ตัวเลขคำตอบด้านในฟองสบู่
+                c.fillStyle = '#ffffff';
+                c.font = '900 3.2rem "Mitr", "Nunito", sans-serif';
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                c.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                c.shadowBlur = 8;
+                c.fillText(b.value, 0, 4);
+
+                // ป้ายกำกับด้านล่างฟอง
+                c.shadowBlur = 0;
+                c.font = '700 1rem "Mitr", sans-serif';
+                c.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                c.fillText(b.label, 0, b.radius + 24);
+
+                c.restore();
+            }
+
+            function gameLoop(time) {
+                // 1. วิเคราะห์ Motion Detection
+                processMotionDetection();
+
+                // 2. เคลียร์และวาดแคนวาส
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (cameraActive && videoEl.readyState >= 2) {
+                    // วาดภาพวิดีโอกลับด้านแนวนอน (Horizontal Mirror)
+                    ctx.save();
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+                    ctx.restore();
+
+                    // เลเยอร์โปร่งแสงเพิ่มคอนทราสต์ให้ฟองสบู่เด่นชัด
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else {
+                    // หากไม่มีกล้อง ใช้วอลล์เปเปอร์พื้นหลังจำลอง
+                    drawFallbackBackground(ctx, time);
+                }
+
+                // 3. ปรับตำแหน่งการลอยของฟองสบู่ (Sinusoidal Floating Physics)
+                bubbleLeft.y = bubbleLeft.baseY + Math.sin(time * 0.0035) * 12;
+                bubbleRight.y = bubbleRight.baseY + Math.sin(time * 0.0035 + Math.PI) * 12;
+
+                // 4. เรนเดอร์ฟองสบู่
+                drawBubble(ctx, bubbleLeft, true, time);
+                drawBubble(ctx, bubbleRight, false, time);
+
+                // 5. อัปเดตและเรนเดอร์อนุภาคระเบิด
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.update();
+                    p.draw(ctx);
+                    if (p.alpha <= 0 || p.radius <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            // ----------------------------------------------------------------
+            // 10. ระบบควบคุมการจับเวลา และเริ่มเกมใหม่
+            // ----------------------------------------------------------------
+            function startTimer() {
+                stopTimer();
+                startTime = Date.now();
+                elapsedSeconds = 0;
+                document.getElementById('timer-val').textContent = '00:00';
+                timerInterval = setInterval(() => {
+                    elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                    document.getElementById('timer-val').textContent = formatTime(elapsedSeconds);
+                }, 1000);
+            }
+
+            function stopTimer() {
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+            }
+
+            function formatTime(sec) {
+                const m = Math.floor(sec / 60).toString().padStart(2, '0');
+                const s = (sec % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            }
+
+            function restartGame() {
+                currentQuestion = 0;
+                score = 0;
+                streak = 0;
+                isWon = false;
+                canAnswer = true;
+                isLocked = false;
+                document.getElementById('score-val').textContent = '0';
+                document.getElementById('victory-modal').classList.remove('active');
+                startTimer();
+                loadNextQuestion();
+            }
+
+            function finishGame() {
+                isWon = true;
+                stopTimer();
+                soundManager.playWin();
+                soundManager.speakThai(`ยินดีด้วยจ้า ทำคะแนนได้ทั้งหมด ${score} คะแนน! หนูบวกเลขเก่งมากๆ เลย!`);
+
+                document.getElementById('final-score').textContent = score;
+                document.getElementById('final-time').textContent = formatTime(elapsedSeconds);
+                document.getElementById('victory-modal').classList.add('active');
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'GAME_WON', score: score }));
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // 11. การเชื่อมต่อเหตุการณ์ (Event Listeners: Touch, Pointer, Keyboard)
+            // ----------------------------------------------------------------
+            // แตะ/คลิกตรงฟองสบู่บนหน้าจอ (Touch / Pointer Fallback)
+            canvas.addEventListener('pointerdown', function (e) {
+                if (!canAnswer || isLocked || isWon) return;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const touchX = (e.clientX - rect.left) * scaleX;
+                const touchY = (e.clientY - rect.top) * scaleY;
+
+                const distLeft = Math.hypot(touchX - bubbleLeft.x, touchY - bubbleLeft.y);
+                const distRight = Math.hypot(touchX - bubbleRight.x, touchY - bubbleRight.y);
+
+                const touchRadius = bubbleLeft.radius + 30;
+                if (distLeft < touchRadius) {
+                    handleChoice(0);
+                } else if (distRight < touchRadius) {
+                    handleChoice(1);
+                }
+            });
+
+            // คีย์บอร์ด (Keyboard Navigation Fallback: ลูกศรซ้าย/ขวา, A/D, 1/2)
+            window.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowLeft' || e.code === 'KeyA' || e.key === '1') {
+                    handleChoice(0);
+                } else if (e.key === 'ArrowRight' || e.code === 'KeyD' || e.key === '2') {
+                    handleChoice(1);
+                } else if (e.code === 'KeyR' || e.key === 'r') {
+                    restartGame();
+                }
+            });
+
+            // ปุ่มเลือกระดับความยาก (Easy, Medium, Hard)
+            document.querySelectorAll('.btn-diff').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    soundManager.playClick();
+                    document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    difficulty = this.dataset.diff;
+                    restartGame();
+                });
+            });
+
+            // ปุ่มเลือกจำนวนข้อ (5, 10, 20 ข้อ)
+            document.querySelectorAll('.btn-q').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    soundManager.playClick();
+                    document.querySelectorAll('.btn-q').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    totalQuestions = parseInt(this.dataset.q, 10);
+                    restartGame();
+                });
+            });
+
+            // ปุ่มเปิด/ปิดกล้อง
+            document.getElementById('btn-toggle-cam').addEventListener('click', function () {
+                soundManager.playClick();
+                toggleCamera();
+            });
+
+            // ปุ่มเริ่มใหม่
+            document.getElementById('btn-restart').addEventListener('click', function () {
+                soundManager.playClick();
+                restartGame();
+            });
+
+            // ปุ่มเล่นอีกรอบในโมดอลชัยชนะ
+            document.getElementById('btn-play-again').addEventListener('click', function () {
+                soundManager.playClick();
+                restartGame();
+            });
+
+            // ปุ่มกลับหน้าหลัก (รองรับทั้ง Iframe Modal ของ Hub และการเปิดหน้าตรง)
+            document.getElementById('btn-home').addEventListener('click', function (e) {
+                if (window.parent && typeof window.parent.closeModal === 'function') {
+                    e.preventDefault();
+                    stopCamera();
+                    window.parent.closeModal();
+                }
+            });
+
+            // ป๊อปอัป QR Code จอยมือถือ
+            const qrModal = document.getElementById('qr-modal');
+            const qrImage = document.getElementById('qr-image');
+            const qrLoading = document.getElementById('qr-loading');
+            const qrLink = document.getElementById('qr-link');
+
+            document.getElementById('btn-phone-connect').addEventListener('click', async function () {
+                soundManager.playClick();
+                qrModal.classList.add('active');
+                try {
+                    const res = await fetch('/api/qrcode');
+                    if (res.ok) {
+                        const data = await res.json();
+                        qrImage.src = data.qr;
+                        qrImage.style.display = 'block';
+                        qrLoading.style.display = 'none';
+                        qrLink.href = data.url;
+                        qrLink.textContent = data.url;
+                    }
+                } catch (err) {
+                    qrLoading.textContent = 'ไม่สามารถดึง QR Code ได้';
+                }
+            });
+
+            document.getElementById('btn-close-qr').addEventListener('click', function () {
+                qrModal.classList.remove('active');
+            });
+
+            // เปิดใช้งาน AudioContext เมื่อคลิกครั้งแรก
+            document.body.addEventListener('click', function () {
+                if (typeof soundManager.init === 'function') {
+                    soundManager.init();
+                }
+            }, { once: true });
+
+            // ปิดกล้องเมื่อออกจากหน้าจอ
+            window.addEventListener('beforeunload', function () {
+                stopCamera();
+            });
+
+            // ----------------------------------------------------------------
+            // 12. เริ่มการทำงานของระบบ (Game Startup)
+            // ----------------------------------------------------------------
+            initWebSocket();
+            restartGame();
+            requestAnimationFrame(gameLoop);
+
+            // พยายามเปิดกล้องอัตโนมัติ (หากผู้ใช้อนุญาต)
+            initCamera().catch(err => {
+                activateFallbackMode("สลับเป็นโหมดแตะสัมผัสและจอยมือถือให้แล้วจ้า");
+            });
+
+        })();
+    </script>
 </body>
 </html>
