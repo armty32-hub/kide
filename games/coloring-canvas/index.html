@@ -3,66 +3,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>จานสีระบายใจสัตว์น่ารัก - สวนสนุกเสริมพัฒนาการ</title>
+    <title>สตูดิโอระบายสีอัจฉริยะ 16 ภาพวาด - สวนสนุกเสริมพัฒนาการ</title>
     <link rel="stylesheet" href="../../style.css">
     <style>
-        .color-canvas-stage {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 32px;
-            padding: 20px;
+        :root {
+            --stage-bg: #fff5f8;
+            --panel-border: #fbcfe8;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fdf2f8 0%, #f0fdf4 50%, #eff6ff 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: pan-y;
+            font-family: 'Prompt', 'Kanit', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            max-width: 680px;
-            width: 100%;
-            box-shadow: var(--shadow-soft);
-            margin-top: 10px;
         }
-        .art-board {
-            width: 320px;
-            height: 320px;
-            background: #ffffff;
-            border: 5px solid #fbcfe8;
+
+        .studio-container {
+            width: 96%;
+            max-width: 900px;
+            margin: 10px auto 25px auto;
+            background: rgba(255, 255, 255, 0.96);
             border-radius: 28px;
+            box-shadow: 0 16px 40px rgba(219, 39, 119, 0.12);
+            border: 4px solid #fce7f3;
+            padding: 16px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Category Tabs */
+        .category-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            width: 100%;
+            padding: 4px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cat-tab-btn {
+            background: #fdf2f8;
+            color: #db2777;
+            border: 2px solid #fbcfe8;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .cat-tab-btn.active, .cat-tab-btn:hover {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: #ffffff;
+            border-color: #db2777;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.25);
+        }
+
+        /* Picture Picker Drawer */
+        .gallery-carousel {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            width: 100%;
+            padding: 8px 4px;
+            box-sizing: border-box;
+            scrollbar-width: thin;
+        }
+
+        .gallery-item {
+            flex: 0 0 74px;
+            height: 74px;
+            background: #ffffff;
+            border: 3px solid #f1f5f9;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .gallery-item:hover, .gallery-item.active {
+            border-color: #ec4899;
+            transform: scale(1.08);
+            box-shadow: 0 6px 16px rgba(236, 72, 153, 0.3);
+            background: #fdf2f8;
+        }
+
+        .gallery-item.active::after {
+            content: '✓';
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #10b981;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-            margin-bottom: 15px;
+            border: 2px solid #fff;
         }
-        .svg-art {
-            width: 280px;
-            height: 280px;
-            cursor: pointer;
+
+        .gallery-thumb {
+            width: 44px;
+            height: 44px;
+            pointer-events: none;
         }
-        .svg-part {
+
+        .gallery-name {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 2px;
+            max-width: 68px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* Main Workspace: Left Canvas, Right/Bottom Tools */
+        .workspace-grid {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        /* 3-Layer Canvas Stage */
+        .art-stage-wrapper {
+            position: relative;
+            width: 380px;
+            height: 380px;
+            max-width: 90vw;
+            max-height: 90vw;
+            background: #ffffff;
+            border-radius: 28px;
+            border: 6px solid #fbcfe8;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        /* Layer 1: Fill SVG */
+        .svg-fill-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .colorable-part {
             fill: #ffffff;
+            stroke: #e2e8f0;
+            stroke-width: 1;
+            cursor: pointer;
+            transition: fill 0.15s ease, filter 0.15s ease;
+        }
+
+        .colorable-part:hover {
+            filter: brightness(0.95);
+        }
+
+        /* Layer 2: Freehand Drawing Canvas */
+        #drawing-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        /* Layer 3: Top Crisp Line Art Overlay */
+        .svg-outline-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .outline-stroke {
+            fill: none;
             stroke: #1e293b;
-            stroke-width: 4;
+            stroke-width: 4.5;
             stroke-linecap: round;
             stroke-linejoin: round;
-            transition: fill 0.2s;
-            cursor: pointer;
         }
-        .palette-bar {
+
+        .outline-detail {
+            fill: none;
+            stroke: #334155;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .outline-solid {
+            fill: #1e293b;
+            stroke: none;
+        }
+
+        /* Tools Panel */
+        .tools-panel {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            max-width: 380px;
+            width: 100%;
+        }
+
+        /* Mode Selector Buttons */
+        .mode-button-group {
+            display: flex;
+            gap: 8px;
+            background: #fdf2f8;
+            padding: 6px;
+            border-radius: 20px;
+            border: 2px solid #fce7f3;
             flex-wrap: wrap;
             justify-content: center;
-            max-width: 500px;
         }
-        .color-dot {
-            width: 45px;
-            height: 45px;
+
+        .tool-btn {
+            background: #ffffff;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            padding: 8px 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .tool-btn:hover {
+            transform: translateY(-2px);
+            color: #db2777;
+        }
+
+        .tool-btn.active {
+            background: linear-gradient(135deg, #ec4899, #db2777);
+            color: #ffffff;
+            border-color: #be185d;
+            box-shadow: 0 4px 12px rgba(219, 39, 119, 0.35);
+            transform: translateY(-2px) scale(1.04);
+        }
+
+        /* Brush Size & Sticker Sub-Options */
+        .subtools-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 18px;
+            border: 2px solid #e2e8f0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .size-dot-btn {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 3px solid #ffffff;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            background: #ffffff;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .size-dot-btn:hover, .size-dot-btn.active {
+            border-color: #ec4899;
+            background: #fdf2f8;
+            transform: scale(1.15);
+        }
+
+        .size-dot-inner {
+            background: #475569;
+            border-radius: 50%;
+        }
+
+        .sticker-btn {
+            font-size: 1.4rem;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             transition: transform 0.15s;
         }
-        .color-dot:hover, .color-dot.active {
+
+        .sticker-btn:hover, .sticker-btn.active {
             transform: scale(1.25);
-            box-shadow: 0 0 12px rgba(0,0,0,0.3);
+            border-color: #db2777;
+            background: #fdf2f8;
+            box-shadow: 0 4px 10px rgba(219, 39, 119, 0.2);
+        }
+
+        /* Color Palette Grid */
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 22px;
+            border: 3px solid #fce7f3;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+        }
+
+        .color-swatch {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 3.5px solid #ffffff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.2);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+        }
+
+        .color-swatch.active {
+            transform: scale(1.25);
+            box-shadow: 0 0 0 3px #ec4899, 0 6px 16px rgba(219, 39, 119, 0.4);
+        }
+
+        .color-swatch.active::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        /* Sparkle Particle Animation */
+        .sparkle-fx {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: sparklePop 0.5s ease-out forwards;
+            z-index: 10;
+        }
+
+        @keyframes sparklePop {
+            0% { transform: scale(0.2) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.6) rotate(180deg); opacity: 0; }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 600px) {
+            .art-stage-wrapper {
+                width: 320px;
+                height: 320px;
+            }
+            .color-swatch {
+                width: 36px;
+                height: 36px;
+            }
+            .tool-btn {
+                padding: 6px 10px;
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
@@ -70,7 +425,7 @@
     <header class="header">
         <div class="title-container">
             <span class="title-emoji">🎨</span>
-            <h1 class="game-title">จานสีระบายใจสัตว์น่ารัก</h1>
+            <h1 class="game-title">สตูดิโอระบายสีอัจฉริยะ</h1>
             <span class="title-emoji">🖌️</span>
         </div>
     </header>
@@ -80,96 +435,1018 @@
             <a href="/" class="btn-icon btn-home" title="กลับหน้าหลัก">
                 <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
             </a>
-            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
-                <span>🔄</span> <span class="btn-text">ล้างสี</span>
+            <button id="btn-undo" class="btn-icon" title="ย้อนกลับ (Undo)">
+                <span>↩️</span> <span class="btn-text">ย้อนกลับ</span>
+            </button>
+            <button id="btn-restart" class="btn-icon btn-restart" title="เริ่มใหม่ / ล้างสีใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+            <button id="btn-save" class="btn-icon btn-save" title="บันทึกภาพผลงาน (Save PNG)" style="background: #10b981; color: white;">
+                <span>💾</span> <span class="btn-text">บันทึกรูปภาพ</span>
             </button>
         </div>
     </div>
 
-    <main class="color-canvas-stage">
-        <div style="font-size: 1.2rem; font-weight: 700; color: #db2777; margin-bottom: 12px;">
-            แตะเลือกสีด้านล่าง แล้วแตะที่ตัวน้องหมีเพื่อแต้มสีเลย! 🐻✨
+    <main class="studio-container">
+        <!-- 1. Category Tabs -->
+        <div class="category-tabs" id="cat-tabs">
+            <button class="cat-tab-btn active" data-cat="all">🌈 ทั้งหมด (16 รูป)</button>
+            <button class="cat-tab-btn" data-cat="animals">🐶 สัตว์น่ารัก</button>
+            <button class="cat-tab-btn" data-cat="vehicles">🚗 ยานพาหนะ</button>
+            <button class="cat-tab-btn" data-cat="sweets">🍦 ขนม & อาหาร</button>
+            <button class="cat-tab-btn" data-cat="nature">🦕 ธรรมชาติ & ไดโน</button>
         </div>
 
-        <div class="art-board">
-            <!-- ภาพวาดการ์ตูนหมี SVG แบ่งชิ้นส่วน -->
-            <svg class="svg-art" viewBox="0 0 200 200">
-                <!-- หูซ้าย ขวา -->
-                <circle class="svg-part" cx="50" cy="50" r="30" onclick="paint(this)" />
-                <circle class="svg-part" cx="150" cy="50" r="30" onclick="paint(this)" />
-                <!-- ลำตัว -->
-                <ellipse class="svg-part" cx="100" cy="150" rx="60" ry="45" onclick="paint(this)" />
-                <!-- หัว -->
-                <circle class="svg-part" cx="100" cy="95" r="55" onclick="paint(this)" />
-                <!-- จมูก/ปาก -->
-                <ellipse class="svg-part" cx="100" cy="110" rx="25" ry="18" onclick="paint(this)" />
-                <!-- ตา -->
-                <circle cx="80" cy="85" r="6" fill="#1e293b" />
-                <circle cx="120" cy="85" r="6" fill="#1e293b" />
-                <!-- จมูกดำ -->
-                <ellipse cx="100" cy="105" rx="8" ry="6" fill="#1e293b" />
-            </svg>
+        <!-- 2. Picture Picker Carousel -->
+        <div class="gallery-carousel" id="gallery-carousel">
+            <!-- Populated via JavaScript -->
         </div>
 
-        <div class="palette-bar" id="palette-bar">
-            <!-- จุดสีต่างๆ -->
+        <!-- 3. Main Workspace: Canvas Stage + Tools -->
+        <div class="workspace-grid">
+            <!-- Dual-Layer Stage: SVG Base + Draw Canvas + Top Line Overlay -->
+            <div class="art-stage-wrapper" id="stage-wrapper">
+                <!-- Layer 1: Fillable Base SVG -->
+                <svg class="svg-fill-layer" id="svg-fill" viewBox="0 0 300 300"></svg>
+
+                <!-- Layer 2: Freehand Drawing Canvas -->
+                <canvas id="drawing-canvas" width="600" height="600"></canvas>
+
+                <!-- Layer 3: Top Crisp Line Art Overlay -->
+                <svg class="svg-outline-layer" id="svg-outline" viewBox="0 0 300 300"></svg>
+            </div>
+
+            <!-- Right Tools Panel -->
+            <div class="tools-panel">
+                <!-- Tool Selector -->
+                <div class="mode-button-group">
+                    <button class="tool-btn active" id="tool-fill" title="แตะลงสีชิ้นส่วน">
+                        <span>🪣</span> <span>แตะลงสี</span>
+                    </button>
+                    <button class="tool-btn" id="tool-brush" title="พู่กันระบายอิสระ">
+                        <span>🖌️</span> <span>พู่กันระบาย</span>
+                    </button>
+                    <button class="tool-btn" id="tool-sparkle" title="ปากกาดาววิบวับ">
+                        <span>✨</span> <span>ประกายวิบวับ</span>
+                    </button>
+                    <button class="tool-btn" id="tool-stamp" title="สติกเกอร์ปั๊ม">
+                        <span>⭐</span> <span>สติกเกอร์</span>
+                    </button>
+                    <button class="tool-btn" id="tool-eraser" title="ยางลบระบาย">
+                        <span>🧼</span> <span>ยางลบ</span>
+                    </button>
+                </div>
+
+                <!-- Subtool Settings (Brush Sizes or Stickers) -->
+                <div class="subtools-row" id="brush-size-row">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">ขนาดแปรง:</span>
+                    <button class="size-dot-btn" data-size="8" title="ขนาดเล็ก">
+                        <div class="size-dot-inner" style="width: 8px; height: 8px;"></div>
+                    </button>
+                    <button class="size-dot-btn active" data-size="18" title="ขนาดกลาง">
+                        <div class="size-dot-inner" style="width: 14px; height: 14px;"></div>
+                    </button>
+                    <button class="size-dot-btn" data-size="36" title="ขนาดใหญ่">
+                        <div class="size-dot-inner" style="width: 22px; height: 22px;"></div>
+                    </button>
+                </div>
+
+                <div class="subtools-row" id="stamp-select-row" style="display: none;">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: #64748b;">เลือกสติกเกอร์:</span>
+                    <button class="sticker-btn active" data-stamp="⭐">⭐</button>
+                    <button class="sticker-btn" data-stamp="❤️">❤️</button>
+                    <button class="sticker-btn" data-stamp="🌸">🌸</button>
+                    <button class="sticker-btn" data-stamp="👑">👑</button>
+                    <button class="sticker-btn" data-stamp="🦋">🦋</button>
+                    <button class="sticker-btn" data-stamp="🐾">🐾</button>
+                </div>
+
+                <!-- 18 Vibrant Color Swatches -->
+                <div class="palette-grid" id="palette-grid">
+                    <!-- Populated via JavaScript -->
+                </div>
+            </div>
         </div>
     </main>
 
     <script src="../../sounds.js"></script>
     <script>
-        const COLORS = ['#ef4444', '#f97316', '#facc15', '#22c55e', '#38bdf8', '#3b82f6', '#a855f7', '#ec4899', '#854d0e', '#ffffff'];
-        let selectedColor = '#f97316';
-        const palette = document.getElementById('palette-bar');
+        /* -------------------------------------------------------------------------
+         * 1. 16 HIGH-QUALITY VECTOR ART DRAWINGS
+         * ------------------------------------------------------------------------- */
+        const DRAWINGS = [
+            {
+                id: 'teddy',
+                name: 'น้องหมี',
+                category: 'animals',
+                render: () => ({
+                    fill: `
+                        <circle class="colorable-part" data-part="หูซ้าย" cx="70" cy="70" r="38" />
+                        <circle class="colorable-part" data-part="หูซ้ายใน" cx="70" cy="70" r="22" />
+                        <circle class="colorable-part" data-part="หูขวา" cx="230" cy="70" r="38" />
+                        <circle class="colorable-part" data-part="หูขวาใน" cx="230" cy="70" r="22" />
+                        <ellipse class="colorable-part" data-part="ลำตัว" cx="150" cy="225" rx="85" ry="65" />
+                        <ellipse class="colorable-part" data-part="พุง" cx="150" cy="225" rx="55" ry="42" />
+                        <circle class="colorable-part" data-part="หัว" cx="150" cy="130" r="75" />
+                        <ellipse class="colorable-part" data-part="จมูกปาก" cx="150" cy="155" rx="35" ry="24" />
+                        <circle class="colorable-part" data-part="แก้มซ้าย" cx="105" cy="150" r="14" />
+                        <circle class="colorable-part" data-part="แก้มขวา" cx="195" cy="150" r="14" />
+                    `,
+                    outline: `
+                        <circle class="outline-stroke" cx="70" cy="70" r="38" />
+                        <circle class="outline-detail" cx="70" cy="70" r="22" />
+                        <circle class="outline-stroke" cx="230" cy="70" r="38" />
+                        <circle class="outline-detail" cx="230" cy="70" r="22" />
+                        <ellipse class="outline-stroke" cx="150" cy="225" rx="85" ry="65" />
+                        <ellipse class="outline-detail" cx="150" cy="225" rx="55" ry="42" />
+                        <circle class="outline-stroke" cx="150" cy="130" r="75" />
+                        <ellipse class="outline-stroke" cx="150" cy="155" rx="35" ry="24" />
+                        <circle class="outline-solid" cx="120" cy="120" r="8" />
+                        <circle class="outline-solid" cx="180" cy="120" r="8" />
+                        <ellipse class="outline-solid" cx="150" cy="148" rx="12" ry="8" />
+                        <path class="outline-detail" d="M150,156 L150,166 Q150,174 140,174 M150,166 Q150,174 160,174" />
+                    `
+                })
+            },
+            {
+                id: 'kitten',
+                name: 'ลูกแมวน้อย',
+                category: 'animals',
+                render: () => ({
+                    fill: `
+                        <polygon class="colorable-part" data-part="หูซ้าย" points="65,110 95,30 135,80" />
+                        <polygon class="colorable-part" data-part="หูซ้ายใน" points="75,100 95,45 125,80" />
+                        <polygon class="colorable-part" data-part="หูขวา" points="235,110 205,30 165,80" />
+                        <polygon class="colorable-part" data-part="หูขวาใน" points="225,100 205,45 175,80" />
+                        <ellipse class="colorable-part" data-part="ตัวแมว" cx="150" cy="230" rx="75" ry="60" />
+                        <path class="colorable-part" data-part="หางแมว" d="M210,240 Q270,220 270,170 Q270,140 250,150 Q240,170 205,210 Z" />
+                        <circle class="colorable-part" data-part="หัวแมว" cx="150" cy="135" r="70" />
+                        <ellipse class="colorable-part" data-part="อกขาว" cx="150" cy="230" rx="42" ry="40" />
+                    `,
+                    outline: `
+                        <polygon class="outline-stroke" points="65,110 95,30 135,80" />
+                        <polygon class="outline-detail" points="75,100 95,45 125,80" />
+                        <polygon class="outline-stroke" points="235,110 205,30 165,80" />
+                        <polygon class="outline-detail" points="225,100 205,45 175,80" />
+                        <ellipse class="outline-stroke" cx="150" cy="230" rx="75" ry="60" />
+                        <path class="outline-stroke" d="M210,240 Q270,220 270,170 Q270,140 250,150 Q240,170 205,210 Z" />
+                        <circle class="outline-stroke" cx="150" cy="135" r="70" />
+                        <circle class="outline-solid" cx="120" cy="125" r="8" />
+                        <circle class="outline-solid" cx="180" cy="125" r="8" />
+                        <polygon class="outline-solid" points="144,145 156,145 150,153" />
+                        <path class="outline-detail" d="M150,153 Q142,162 135,157 M150,153 Q158,162 165,157" />
+                        <path class="outline-detail" d="M110,145 L70,140 M110,152 L65,155 M190,145 L230,140 M190,152 L235,155" />
+                    `
+                })
+            },
+            {
+                id: 'bunny',
+                name: 'กระต่าย',
+                category: 'animals',
+                render: () => ({
+                    fill: `
+                        <ellipse class="colorable-part" data-part="หูซ้าย" cx="105" cy="70" rx="25" ry="65" transform="rotate(-10 105 70)" />
+                        <ellipse class="colorable-part" data-part="หูซ้ายใน" cx="105" cy="70" rx="14" ry="48" transform="rotate(-10 105 70)" />
+                        <ellipse class="colorable-part" data-part="หูขวา" cx="195" cy="70" rx="25" ry="65" transform="rotate(10 195 70)" />
+                        <ellipse class="colorable-part" data-part="หูขวาใน" cx="195" cy="70" rx="14" ry="48" transform="rotate(10 195 70)" />
+                        <ellipse class="colorable-part" data-part="ตัวกระต่าย" cx="150" cy="235" rx="75" ry="55" />
+                        <circle class="colorable-part" data-part="หัวกระต่าย" cx="150" cy="150" r="65" />
+                        <circle class="colorable-part" data-part="แก้มซ้าย" cx="110" cy="165" r="16" />
+                        <circle class="colorable-part" data-part="แก้มขวา" cx="190" cy="165" r="16" />
+                        <circle class="colorable-part" data-part="หางปุกปุย" cx="70" cy="245" r="22" />
+                    `,
+                    outline: `
+                        <ellipse class="outline-stroke" cx="105" cy="70" rx="25" ry="65" transform="rotate(-10 105 70)" />
+                        <ellipse class="outline-detail" cx="105" cy="70" rx="14" ry="48" transform="rotate(-10 105 70)" />
+                        <ellipse class="outline-stroke" cx="195" cy="70" rx="25" ry="65" transform="rotate(10 195 70)" />
+                        <ellipse class="outline-detail" cx="195" cy="70" rx="14" ry="48" transform="rotate(10 195 70)" />
+                        <ellipse class="outline-stroke" cx="150" cy="235" rx="75" ry="55" />
+                        <circle class="outline-stroke" cx="150" cy="150" r="65" />
+                        <circle class="outline-stroke" cx="70" cy="245" r="22" />
+                        <circle class="outline-solid" cx="125" cy="140" r="8" />
+                        <circle class="outline-solid" cx="175" cy="140" r="8" />
+                        <ellipse class="outline-solid" cx="150" cy="156" rx="8" ry="6" />
+                        <path class="outline-detail" d="M150,162 Q142,172 135,166 M150,162 Q158,172 165,166" />
+                    `
+                })
+            },
+            {
+                id: 'elephant',
+                name: 'ช้างน้อย',
+                category: 'animals',
+                render: () => ({
+                    fill: `
+                        <ellipse class="colorable-part" data-part="หูซ้าย" cx="75" cy="125" rx="50" ry="60" />
+                        <ellipse class="colorable-part" data-part="หูขวา" cx="225" cy="125" rx="50" ry="60" />
+                        <ellipse class="colorable-part" data-part="ลำตัวช้าง" cx="150" cy="220" rx="90" ry="65" />
+                        <circle class="colorable-part" data-part="หัวช้าง" cx="150" cy="125" r="65" />
+                        <path class="colorable-part" data-part="งวงช้าง" d="M140,150 Q130,220 160,225 Q180,225 175,195 Q160,195 160,150 Z" />
+                        <ellipse class="colorable-part" data-part="หยดน้ำ 1" cx="190" cy="180" rx="12" ry="16" />
+                        <ellipse class="colorable-part" data-part="หยดน้ำ 2" cx="215" cy="150" rx="8" ry="12" />
+                    `,
+                    outline: `
+                        <ellipse class="outline-stroke" cx="75" cy="125" rx="50" ry="60" />
+                        <ellipse class="outline-stroke" cx="225" cy="125" rx="50" ry="60" />
+                        <ellipse class="outline-stroke" cx="150" cy="220" rx="90" ry="65" />
+                        <circle class="outline-stroke" cx="150" cy="125" r="65" />
+                        <path class="outline-stroke" d="M140,150 Q130,220 160,225 Q180,225 175,195 Q160,195 160,150 Z" />
+                        <circle class="outline-solid" cx="120" cy="115" r="7" />
+                        <circle class="outline-solid" cx="180" cy="115" r="7" />
+                        <ellipse class="outline-stroke" cx="190" cy="180" rx="12" ry="16" />
+                        <ellipse class="outline-stroke" cx="215" cy="150" rx="8" ry="12" />
+                    `
+                })
+            },
+            {
+                id: 'lion',
+                name: 'สิงโต',
+                category: 'animals',
+                render: () => ({
+                    fill: `
+                        <circle class="colorable-part" data-part="แผงคอสิงโต" cx="150" cy="140" r="95" />
+                        <ellipse class="colorable-part" data-part="ตัวสิงโต" cx="150" cy="235" rx="75" ry="50" />
+                        <circle class="colorable-part" data-part="หน้าสิงโต" cx="150" cy="140" r="65" />
+                        <circle class="colorable-part" data-part="หูซ้าย" cx="95" cy="85" r="22" />
+                        <circle class="colorable-part" data-part="หูขวา" cx="205" cy="85" r="22" />
+                        <ellipse class="colorable-part" data-part="จมูกปาก" cx="150" cy="160" rx="30" ry="20" />
+                    `,
+                    outline: `
+                        <circle class="outline-stroke" cx="150" cy="140" r="95" stroke-dasharray="10 8" />
+                        <ellipse class="outline-stroke" cx="150" cy="235" rx="75" ry="50" />
+                        <circle class="outline-stroke" cx="150" cy="140" r="65" />
+                        <circle class="outline-stroke" cx="95" cy="85" r="22" />
+                        <circle class="outline-stroke" cx="205" cy="85" r="22" />
+                        <ellipse class="outline-stroke" cx="150" cy="160" rx="30" ry="20" />
+                        <circle class="outline-solid" cx="125" cy="130" r="7" />
+                        <circle class="outline-solid" cx="175" cy="130" r="7" />
+                        <polygon class="outline-solid" points="142,152 158,152 150,162" />
+                        <path class="outline-detail" d="M150,162 Q142,172 135,166 M150,162 Q158,172 165,166" />
+                    `
+                })
+            },
+            {
+                id: 'dolphin',
+                name: 'โลมา',
+                category: 'animals',
+                render: () => ({
+                    fill: `
+                        <path class="colorable-part" data-part="ตัวโลมา" d="M40,170 Q70,70 170,80 Q250,90 270,140 Q285,160 275,170 Q240,160 180,180 Q100,210 40,170 Z" />
+                        <path class="colorable-part" data-part="ครีบหลัง" d="M140,80 Q160,35 180,60 Q170,75 160,82 Z" />
+                        <path class="colorable-part" data-part="ครีบข้าง" d="M150,160 Q170,210 195,190 Q180,175 165,165 Z" />
+                        <path class="colorable-part" data-part="หางปลา" d="M40,170 Q20,135 10,145 Q25,170 10,195 Q20,200 40,170 Z" />
+                        <path class="colorable-part" data-part="ท้องโลมา" d="M90,175 Q160,165 240,150 Q200,185 120,185 Z" />
+                        <path class="colorable-part" data-part="คลื่นน้ำ" d="M20,250 Q60,225 100,250 T180,250 T260,250 L280,280 L20,280 Z" />
+                    `,
+                    outline: `
+                        <path class="outline-stroke" d="M40,170 Q70,70 170,80 Q250,90 270,140 Q285,160 275,170 Q240,160 180,180 Q100,210 40,170 Z" />
+                        <path class="outline-stroke" d="M140,80 Q160,35 180,60 Q170,75 160,82 Z" />
+                        <path class="outline-stroke" d="M150,160 Q170,210 195,190 Q180,175 165,165 Z" />
+                        <path class="outline-stroke" d="M40,170 Q20,135 10,145 Q25,170 10,195 Q20,200 40,170 Z" />
+                        <circle class="outline-solid" cx="230" cy="120" r="6" />
+                        <path class="outline-detail" d="M250,138 Q240,146 232,140" />
+                        <path class="outline-stroke" d="M20,250 Q60,225 100,250 T180,250 T260,250" />
+                    `
+                })
+            },
+            {
+                id: 'car',
+                name: 'รถยนต์',
+                category: 'vehicles',
+                render: () => ({
+                    fill: `
+                        <path class="colorable-part" data-part="หลังคารถ" d="M75,140 Q100,75 150,75 Q200,75 225,140 Z" />
+                        <path class="colorable-part" data-part="กระจกหน้า" d="M90,135 Q110,90 145,90 L145,135 Z" />
+                        <path class="colorable-part" data-part="กระจกหลัง" d="M155,135 L155,90 Q190,90 210,135 Z" />
+                        <rect class="colorable-part" data-part="ตัวถังรถ" x="35" y="135" width="230" height="75" rx="24" />
+                        <circle class="colorable-part" data-part="ล้อซ้ายนอก" cx="85" cy="210" r="34" />
+                        <circle class="colorable-part" data-part="ล้อซ้ายใน" cx="85" cy="210" r="18" />
+                        <circle class="colorable-part" data-part="ล้อขวานอก" cx="215" cy="210" r="34" />
+                        <circle class="colorable-part" data-part="ล้อขวาใน" cx="215" cy="210" r="18" />
+                        <circle class="colorable-part" data-part="ไฟหน้า" cx="255" cy="160" r="12" />
+                    `,
+                    outline: `
+                        <path class="outline-stroke" d="M75,140 Q100,75 150,75 Q200,75 225,140 Z" />
+                        <path class="outline-detail" d="M90,135 Q110,90 145,90 L145,135 Z" />
+                        <path class="outline-detail" d="M155,135 L155,90 Q190,90 210,135 Z" />
+                        <rect class="outline-stroke" x="35" y="135" width="230" height="75" rx="24" />
+                        <circle class="outline-stroke" cx="85" cy="210" r="34" />
+                        <circle class="outline-detail" cx="85" cy="210" r="18" />
+                        <circle class="outline-stroke" cx="215" cy="210" r="34" />
+                        <circle class="outline-detail" cx="215" cy="210" r="18" />
+                        <circle class="outline-stroke" cx="255" cy="160" r="12" />
+                        <line class="outline-detail" x1="20" y1="244" x2="280" y2="244" />
+                    `
+                })
+            },
+            {
+                id: 'rocket',
+                name: 'จรวดอวกาศ',
+                category: 'vehicles',
+                render: () => ({
+                    fill: `
+                        <path class="colorable-part" data-part="ปีกซ้าย" d="M100,165 L60,225 L100,215 Z" />
+                        <path class="colorable-part" data-part="ปีกขวา" d="M200,165 L240,225 L200,215 Z" />
+                        <path class="colorable-part" data-part="ตัวจรวด" d="M100,215 L100,110 Q150,25 200,110 L200,215 Z" />
+                        <path class="colorable-part" data-part="หัวจรวด" d="M107,110 Q150,35 193,110 Z" />
+                        <circle class="colorable-part" data-part="หน้าต่างนอก" cx="150" cy="140" r="28" />
+                        <circle class="colorable-part" data-part="หน้าต่างใน" cx="150" cy="140" r="18" />
+                        <polygon class="colorable-part" data-part="เปลวไฟ" points="115,220 150,285 185,220 165,235 150,220 135,235" />
+                        <polygon class="colorable-part" data-part="ดาวเล็ก" points="60,60 65,75 80,75 68,85 72,100 60,90 48,100 52,85 40,75 55,75" />
+                    `,
+                    outline: `
+                        <path class="outline-stroke" d="M100,165 L60,225 L100,215 Z" />
+                        <path class="outline-stroke" d="M200,165 L240,225 L200,215 Z" />
+                        <path class="outline-stroke" d="M100,215 L100,110 Q150,25 200,110 L200,215 Z" />
+                        <path class="outline-detail" d="M107,110 Q150,35 193,110" />
+                        <circle class="outline-stroke" cx="150" cy="140" r="28" />
+                        <circle class="outline-detail" cx="150" cy="140" r="18" />
+                        <polygon class="outline-stroke" points="115,220 150,285 185,220 165,235 150,220 135,235" />
+                        <polygon class="outline-detail" points="60,60 65,75 80,75 68,85 72,100 60,90 48,100 52,85 40,75 55,75" />
+                    `
+                })
+            },
+            {
+                id: 'boat',
+                name: 'เรือใบ',
+                category: 'vehicles',
+                render: () => ({
+                    fill: `
+                        <polygon class="colorable-part" data-part="ใบเรือใหญ่" points="140,40 140,170 50,170" />
+                        <polygon class="colorable-part" data-part="ใบเรือหน้า" points="155,60 235,170 155,170" />
+                        <polygon class="colorable-part" data-part="ธงบนยอดเสา" points="140,25 170,35 140,45" />
+                        <path class="colorable-part" data-part="ตัวเรือ" d="M40,185 L260,185 L225,235 L75,235 Z" />
+                        <path class="colorable-part" data-part="ระลอกคลื่น 1" d="M20,245 Q60,230 100,245 T180,245 T260,245 L280,265 L20,265 Z" />
+                    `,
+                    outline: `
+                        <polygon class="outline-stroke" points="140,40 140,170 50,170" />
+                        <polygon class="outline-stroke" points="155,60 235,170 155,170" />
+                        <line class="outline-stroke" x1="147" y1="25" x2="147" y2="185" />
+                        <polygon class="outline-detail" points="140,25 170,35 140,45" />
+                        <path class="outline-stroke" d="M40,185 L260,185 L225,235 L75,235 Z" />
+                        <path class="outline-stroke" d="M20,245 Q60,230 100,245 T180,245 T260,245" />
+                    `
+                })
+            },
+            {
+                id: 'airplane',
+                name: 'เครื่องบิน',
+                category: 'vehicles',
+                render: () => ({
+                    fill: `
+                        <path class="colorable-part" data-part="ปีกบน" d="M125,135 L90,40 L140,40 L165,135 Z" />
+                        <path class="colorable-part" data-part="หางเครื่องบิน" d="M35,120 L20,70 L55,70 L65,135 Z" />
+                        <path class="colorable-part" data-part="ลำตัวเครื่องบิน" d="M30,145 L215,145 Q275,145 265,160 Q245,175 215,175 L30,175 Z" />
+                        <path class="colorable-part" data-part="ปีกล่าง" d="M125,175 L90,260 L140,260 L165,175 Z" />
+                        <circle class="colorable-part" data-part="หน้าต่าง 1" cx="195" cy="160" r="10" />
+                        <circle class="colorable-part" data-part="หน้าต่าง 2" cx="165" cy="160" r="10" />
+                        <circle class="colorable-part" data-part="หน้าต่าง 3" cx="135" cy="160" r="10" />
+                    `,
+                    outline: `
+                        <path class="outline-stroke" d="M125,135 L90,40 L140,40 L165,135 Z" />
+                        <path class="outline-stroke" d="M35,120 L20,70 L55,70 L65,135 Z" />
+                        <path class="outline-stroke" d="M30,145 L215,145 Q275,145 265,160 Q245,175 215,175 L30,175 Z" />
+                        <path class="outline-stroke" d="M125,175 L90,260 L140,260 L165,175 Z" />
+                        <circle class="outline-detail" cx="195" cy="160" r="10" />
+                        <circle class="outline-detail" cx="165" cy="160" r="10" />
+                        <circle class="outline-detail" cx="135" cy="160" r="10" />
+                    `
+                })
+            },
+            {
+                id: 'icecream',
+                name: 'ไอศกรีม',
+                category: 'sweets',
+                render: () => ({
+                    fill: `
+                        <polygon class="colorable-part" data-part="โคนเวเฟอร์" points="90,165 210,165 150,285" />
+                        <ellipse class="colorable-part" data-part="ไอศกรีมชั้นล่าง" cx="150" cy="160" rx="65" ry="32" />
+                        <ellipse class="colorable-part" data-part="ไอศกรีมชั้นกลาง" cx="150" cy="120" rx="55" ry="30" />
+                        <circle class="colorable-part" data-part="ไอศกรีมชั้นบน" cx="150" cy="80" r="45" />
+                        <circle class="colorable-part" data-part="เชอร์รี่" cx="150" cy="35" r="16" />
+                    `,
+                    outline: `
+                        <polygon class="outline-stroke" points="90,165 210,165 150,285" />
+                        <line class="outline-detail" x1="105" y1="195" x2="195" y2="195" />
+                        <line class="outline-detail" x1="120" y1="225" x2="180" y2="225" />
+                        <line class="outline-detail" x1="135" y1="255" x2="165" y2="255" />
+                        <ellipse class="outline-stroke" cx="150" cy="160" rx="65" ry="32" />
+                        <ellipse class="outline-stroke" cx="150" cy="120" rx="55" ry="30" />
+                        <circle class="outline-stroke" cx="150" cy="80" r="45" />
+                        <circle class="outline-stroke" cx="150" cy="35" r="16" />
+                        <path class="outline-detail" d="M150,20 Q170,10 180,25" />
+                    `
+                })
+            },
+            {
+                id: 'cake',
+                name: 'เค้กวันเกิด',
+                category: 'sweets',
+                render: () => ({
+                    fill: `
+                        <rect class="colorable-part" data-part="ชั้นล่างเค้ก" x="50" y="165" width="200" height="85" rx="16" />
+                        <rect class="colorable-part" data-part="ชั้นบนเค้ก" x="80" y="95" width="140" height="70" rx="14" />
+                        <rect class="colorable-part" data-part="เทียนวันเกิด" x="144" y="55" width="12" height="40" rx="4" />
+                        <ellipse class="colorable-part" data-part="เปลวเทียน" cx="150" cy="40" rx="8" ry="14" />
+                        <circle class="colorable-part" data-part="สตรอว์เบอร์รี่ 1" cx="105" cy="95" r="14" />
+                        <circle class="colorable-part" data-part="สตรอว์เบอร์รี่ 2" cx="195" cy="95" r="14" />
+                        <path class="colorable-part" data-part="ครีมเยิ้ม" d="M50,185 Q75,205 100,185 T150,185 T200,185 T250,185 L250,165 L50,165 Z" />
+                    `,
+                    outline: `
+                        <rect class="outline-stroke" x="50" y="165" width="200" height="85" rx="16" />
+                        <rect class="outline-stroke" x="80" y="95" width="140" height="70" rx="14" />
+                        <path class="outline-detail" d="M50,185 Q75,205 100,185 T150,185 T200,185 T250,185" />
+                        <rect class="outline-stroke" x="144" y="55" width="12" height="40" rx="4" />
+                        <ellipse class="outline-stroke" cx="150" cy="40" rx="8" ry="14" />
+                        <circle class="outline-stroke" cx="105" cy="95" r="14" />
+                        <circle class="outline-stroke" cx="195" cy="95" r="14" />
+                        <line class="outline-detail" x1="30" y1="250" x2="270" y2="250" />
+                    `
+                })
+            },
+            {
+                id: 'pizza',
+                name: 'พิซซ่าชีส',
+                category: 'sweets',
+                render: () => ({
+                    fill: `
+                        <path class="colorable-part" data-part="ขอบขนมปัง" d="M50,75 Q150,30 250,75 L235,95 Q150,55 65,95 Z" />
+                        <polygon class="colorable-part" data-part="หน้าชีสพิซซ่า" points="65,95 235,95 150,270" />
+                        <circle class="colorable-part" data-part="ไส้กรอก 1" cx="150" cy="130" r="22" />
+                        <circle class="colorable-part" data-part="ไส้กรอก 2" cx="115" cy="180" r="18" />
+                        <circle class="colorable-part" data-part="ไส้กรอก 3" cx="175" cy="190" r="18" />
+                        <rect class="colorable-part" data-part="พริกหยวก 1" x="100" y="115" width="24" height="12" rx="4" transform="rotate(25 100 115)" />
+                        <rect class="colorable-part" data-part="พริกหยวก 2" x="160" y="145" width="24" height="12" rx="4" transform="rotate(-30 160 145)" />
+                    `,
+                    outline: `
+                        <path class="outline-stroke" d="M50,75 Q150,30 250,75 L150,270 Z" />
+                        <path class="outline-stroke" d="M50,75 Q150,30 250,75 L235,95 Q150,55 65,95 Z" />
+                        <circle class="outline-stroke" cx="150" cy="130" r="22" />
+                        <circle class="outline-stroke" cx="115" cy="180" r="18" />
+                        <circle class="outline-stroke" cx="175" cy="190" r="18" />
+                        <rect class="outline-detail" x="100" y="115" width="24" height="12" rx="4" transform="rotate(25 100 115)" />
+                        <rect class="outline-detail" x="160" y="145" width="24" height="12" rx="4" transform="rotate(-30 160 145)" />
+                    `
+                })
+            },
+            {
+                id: 'dino',
+                name: 'ไดโนเสาร์',
+                category: 'nature',
+                render: () => ({
+                    fill: `
+                        <polygon class="colorable-part" data-part="หนามหลัง 1" points="100,105 115,70 130,105" />
+                        <polygon class="colorable-part" data-part="หนามหลัง 2" points="135,115 150,80 165,115" />
+                        <polygon class="colorable-part" data-part="หนามหลัง 3" points="170,135 185,100 200,135" />
+                        <path class="colorable-part" data-part="ลำตัวไดโน" d="M85,120 Q60,110 55,140 Q50,170 85,190 L90,240 L120,240 L120,205 Q150,215 175,205 L180,240 L210,240 L210,185 Q265,185 260,140 Q215,160 185,140 Q150,110 85,120 Z" />
+                        <circle class="colorable-part" data-part="หัวไดโน" cx="75" cy="135" r="35" />
+                        <circle class="colorable-part" data-part="จุดลาย 1" cx="135" cy="160" r="10" />
+                        <circle class="colorable-part" data-part="จุดลาย 2" cx="165" cy="170" r="8" />
+                    `,
+                    outline: `
+                        <polygon class="outline-stroke" points="100,105 115,70 130,105" />
+                        <polygon class="outline-stroke" points="135,115 150,80 165,115" />
+                        <polygon class="outline-stroke" points="170,135 185,100 200,135" />
+                        <path class="outline-stroke" d="M85,120 Q60,110 55,140 Q50,170 85,190 L90,240 L120,240 L120,205 Q150,215 175,205 L180,240 L210,240 L210,185 Q265,185 260,140 Q215,160 185,140 Q150,110 85,120 Z" />
+                        <circle class="outline-solid" cx="65" cy="128" r="6" />
+                        <path class="outline-detail" d="M50,145 Q65,155 75,145" />
+                        <circle class="outline-detail" cx="135" cy="160" r="10" />
+                        <circle class="outline-detail" cx="165" cy="170" r="8" />
+                    `
+                })
+            },
+            {
+                id: 'rainbow',
+                name: 'สายรุ้งเมฆ',
+                category: 'nature',
+                render: () => ({
+                    fill: `
+                        <circle class="colorable-part" data-part="พระอาทิตย์" cx="150" cy="90" r="35" />
+                        <path class="colorable-part" data-part="แถบรุ้ง 1" d="M50,200 A100,100 0 0,1 250,200 L235,200 A85,85 0 0,0 65,200 Z" />
+                        <path class="colorable-part" data-part="แถบรุ้ง 2" d="M65,200 A85,85 0 0,1 235,200 L220,200 A70,70 0 0,0 80,200 Z" />
+                        <path class="colorable-part" data-part="แถบรุ้ง 3" d="M80,200 A70,70 0 0,1 220,200 L205,200 A55,55 0 0,0 95,200 Z" />
+                        <path class="colorable-part" data-part="เมฆซ้าย" d="M30,220 Q30,195 50,195 Q55,175 75,180 Q95,175 100,195 Q115,200 110,225 Q110,240 85,240 L45,240 Q30,240 30,220 Z" />
+                        <path class="colorable-part" data-part="เมฆขวา" d="M190,220 Q190,195 210,195 Q215,175 235,180 Q255,175 260,195 Q275,200 270,225 Q270,240 245,240 L205,240 Q190,240 190,220 Z" />
+                    `,
+                    outline: `
+                        <circle class="outline-stroke" cx="150" cy="90" r="35" />
+                        <path class="outline-stroke" d="M50,200 A100,100 0 0,1 250,200" />
+                        <path class="outline-stroke" d="M65,200 A85,85 0 0,1 235,200" />
+                        <path class="outline-stroke" d="M80,200 A70,70 0 0,1 220,200" />
+                        <path class="outline-stroke" d="M95,200 A55,55 0 0,1 205,200" />
+                        <path class="outline-stroke" d="M30,220 Q30,195 50,195 Q55,175 75,180 Q95,175 100,195 Q115,200 110,225 Q110,240 85,240 L45,240 Q30,240 30,220 Z" />
+                        <path class="outline-stroke" d="M190,220 Q190,195 210,195 Q215,175 235,180 Q255,175 260,195 Q275,200 270,225 Q270,240 245,240 L205,240 Q190,240 190,220 Z" />
+                    `
+                })
+            },
+            {
+                id: 'sunflower',
+                name: 'ดอกทานตะวัน',
+                category: 'nature',
+                render: () => ({
+                    fill: `
+                        <rect class="colorable-part" data-part="ก้านดอก" x="142" y="160" width="16" height="110" rx="8" />
+                        <ellipse class="colorable-part" data-part="ใบซ้าย" cx="100" cy="215" rx="35" ry="18" transform="rotate(-20 100 215)" />
+                        <ellipse class="colorable-part" data-part="ใบขวา" cx="200" cy="235" rx="35" ry="18" transform="rotate(20 200 235)" />
+                        <!-- 8 Petals around center -->
+                        <circle class="colorable-part" data-part="กลีบ 1" cx="150" cy="45" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 2" cx="200" cy="65" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 3" cx="225" cy="115" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 4" cx="200" cy="165" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 5" cx="150" cy="185" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 6" cx="100" cy="165" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 7" cx="75" cy="115" r="24" />
+                        <circle class="colorable-part" data-part="กลีบ 8" cx="100" cy="65" r="24" />
+                        <!-- Center Core -->
+                        <circle class="colorable-part" data-part="ใจกลางดอก" cx="150" cy="115" r="50" />
+                    `,
+                    outline: `
+                        <rect class="outline-stroke" x="142" y="160" width="16" height="110" rx="8" />
+                        <ellipse class="outline-stroke" cx="100" cy="215" rx="35" ry="18" transform="rotate(-20 100 215)" />
+                        <ellipse class="outline-stroke" cx="200" cy="235" rx="35" ry="18" transform="rotate(20 200 235)" />
+                        <circle class="outline-stroke" cx="150" cy="45" r="24" />
+                        <circle class="outline-stroke" cx="200" cy="65" r="24" />
+                        <circle class="outline-stroke" cx="225" cy="115" r="24" />
+                        <circle class="outline-stroke" cx="200" cy="165" r="24" />
+                        <circle class="outline-stroke" cx="150" cy="185" r="24" />
+                        <circle class="outline-stroke" cx="100" cy="165" r="24" />
+                        <circle class="outline-stroke" cx="75" cy="115" r="24" />
+                        <circle class="outline-stroke" cx="100" cy="65" r="24" />
+                        <circle class="outline-stroke" cx="150" cy="115" r="50" />
+                        <circle class="outline-solid" cx="132" cy="105" r="6" />
+                        <circle class="outline-solid" cx="168" cy="105" r="6" />
+                        <path class="outline-detail" d="M135,125 Q150,140 165,125" />
+                    `
+                })
+            }
+        ];
 
+        /* -------------------------------------------------------------------------
+         * 2. 18 VIBRANT COLORS WITH THAI PRONUNCIATIONS
+         * ------------------------------------------------------------------------- */
+        const THAI_COLORS = [
+            { name: 'สีแดง', hex: '#ef4444' },
+            { name: 'สีส้ม', hex: '#f97316' },
+            { name: 'สีส้มพีช', hex: '#fb923c' },
+            { name: 'สีเหลืองทอง', hex: '#f59e0b' },
+            { name: 'สีเหลืองสดใส', hex: '#facc15' },
+            { name: 'สีเขียวมะนาว', hex: '#84cc16' },
+            { name: 'สีเขียวสด', hex: '#22c55e' },
+            { name: 'สีเขียวเข้ม', hex: '#15803d' },
+            { name: 'สีเขียวมรกต', hex: '#14b8a6' },
+            { name: 'สีฟ้าสดใส', hex: '#38bdf8' },
+            { name: 'สีน้ำเงิน', hex: '#3b82f6' },
+            { name: 'สีน้ำเงินเข้ม', hex: '#1d4ed8' },
+            { name: 'สีม่วง', hex: '#8b5cf6' },
+            { name: 'สีชมพูหวาน', hex: '#ec4899' },
+            { name: 'สีชมพูบานเย็น', hex: '#f43f5e' },
+            { name: 'สีน้ำตาล', hex: '#854d0e' },
+            { name: 'สีขาว', hex: '#ffffff' },
+            { name: 'สีดำ', hex: '#0f172a' }
+        ];
+
+        /* -------------------------------------------------------------------------
+         * 3. STATE & CANVAS VARIABLES
+         * ------------------------------------------------------------------------- */
+        let currentDrawingIndex = 0;
+        let selectedColor = THAI_COLORS[0].hex;
+        let currentTool = 'fill'; // 'fill', 'brush', 'sparkle', 'stamp', 'eraser'
+        let brushSize = 18;
+        let selectedStamp = '⭐';
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Undo History Stack (saves canvas states and fill states)
+        const undoStack = [];
+        const MAX_UNDO = 15;
+
+        const stageWrapper = document.getElementById('stage-wrapper');
+        const svgFill = document.getElementById('svg-fill');
+        const svgOutline = document.getElementById('svg-outline');
+        const drawCanvas = document.getElementById('drawing-canvas');
+        const ctx = drawCanvas.getContext('2d', { willReadFrequently: true });
+        const paletteGrid = document.getElementById('palette-grid');
+        const galleryCarousel = document.getElementById('gallery-carousel');
+        const catTabs = document.getElementById('cat-tabs');
+        const brushSizeRow = document.getElementById('brush-size-row');
+        const stampSelectRow = document.getElementById('stamp-select-row');
+
+        /* -------------------------------------------------------------------------
+         * 4. WEBSOCKET CONTROLLER SYNC
+         * ------------------------------------------------------------------------- */
         let ws = null;
         try {
             ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
             ws.onopen = () => {
                 ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
-                ws.send(JSON.stringify({
-                    type: 'SYNC_STATE',
-                    pairs: 5,
-                    matchedPairs: 0,
-                    cards: COLORS.slice(0, 6).map((c, i) => ({ index: i, emoji: '🎨', name: `สีที่ ${i + 1}` }))
-                }));
+                syncStateToController();
             };
             ws.onmessage = (e) => {
                 const d = JSON.parse(e.data);
-                if (d.type === 'TAP_CARD' && COLORS[d.index]) selectColor(COLORS[d.index]);
+                if (d.type === 'TAP_CARD') {
+                    // Controller tap can change color or tools
+                    if (d.index !== undefined && THAI_COLORS[d.index]) {
+                        selectColor(THAI_COLORS[d.index].hex, THAI_COLORS[d.index].name);
+                    }
+                }
             };
         } catch(e){}
 
-        function initPalette() {
-            palette.innerHTML = '';
-            COLORS.forEach((c, idx) => {
-                const dot = document.createElement('div');
-                dot.className = `color-dot ${c === selectedColor ? 'active' : ''}`;
-                dot.style.background = c;
-                dot.onclick = () => selectColor(c, dot);
-                palette.appendChild(dot);
+        function syncStateToController() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({
+                type: 'SYNC_STATE',
+                gameId: 'coloring-canvas',
+                title: DRAWINGS[currentDrawingIndex].name,
+                pairs: THAI_COLORS.length,
+                matchedPairs: 0,
+                cards: THAI_COLORS.slice(0, 8).map((c, i) => ({ index: i, emoji: '🎨', name: c.name }))
+            }));
+        }
+
+        /* -------------------------------------------------------------------------
+         * 5. INITIALIZATION & GALLERY
+         * ------------------------------------------------------------------------- */
+        function initGallery(filterCat = 'all') {
+            galleryCarousel.innerHTML = '';
+            DRAWINGS.forEach((drawing, idx) => {
+                if (filterCat !== 'all' && drawing.category !== filterCat) return;
+
+                const item = document.createElement('div');
+                item.className = `gallery-item ${idx === currentDrawingIndex ? 'active' : ''}`;
+                item.title = drawing.name;
+
+                // Render micro-preview SVG
+                const rendered = drawing.render();
+                item.innerHTML = `
+                    <svg class="gallery-thumb" viewBox="0 0 300 300">
+                        ${rendered.fill}
+                        ${rendered.outline}
+                    </svg>
+                    <div class="gallery-name">${drawing.name}</div>
+                `;
+
+                item.onclick = () => {
+                    selectDrawing(idx);
+                };
+                galleryCarousel.appendChild(item);
             });
         }
 
-        function selectColor(c, dot) {
-            selectedColor = c;
-            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
-            if (dot) dot.classList.add('active');
-            soundManager.playClick();
+        function initPalette() {
+            paletteGrid.innerHTML = '';
+            THAI_COLORS.forEach(c => {
+                const swatch = document.createElement('div');
+                swatch.className = `color-swatch ${c.hex === selectedColor ? 'active' : ''}`;
+                swatch.style.backgroundColor = c.hex;
+                swatch.title = c.name;
+                swatch.onclick = () => selectColor(c.hex, c.name, swatch);
+                paletteGrid.appendChild(swatch);
+            });
         }
 
-        function paint(el) {
+        function selectColor(hex, name, el) {
+            selectedColor = hex;
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+            if (el) el.classList.add('active');
+            else {
+                const match = Array.from(document.querySelectorAll('.color-swatch')).find(s => s.style.backgroundColor === hex || s.title === name);
+                if (match) match.classList.add('active');
+            }
+
+            soundManager.playClick();
+            if (name) {
+                soundManager.speakThai(name);
+            }
+        }
+
+        function selectDrawing(idx) {
+            currentDrawingIndex = idx;
+            document.querySelectorAll('.gallery-item').forEach((item, i) => {
+                item.classList.toggle('active', item.title === DRAWINGS[idx].name);
+            });
+
+            // Clear canvas and render new drawing
+            clearCanvas();
+            loadCurrentDrawing();
             soundManager.playFlip();
-            el.style.fill = selectedColor;
+            soundManager.speakThai(DRAWINGS[idx].name);
+            syncStateToController();
         }
 
-        document.getElementById('btn-restart').onclick = () => {
-            document.querySelectorAll('.svg-part').forEach(p => p.style.fill = '#ffffff');
+        function loadCurrentDrawing() {
+            const drawing = DRAWINGS[currentDrawingIndex];
+            const rendered = drawing.render();
+
+            svgFill.innerHTML = rendered.fill;
+            svgOutline.innerHTML = rendered.outline;
+
+            // Attach fill click listeners to all parts
+            svgFill.querySelectorAll('.colorable-part').forEach(part => {
+                part.onclick = (e) => {
+                    if (currentTool === 'fill') {
+                        saveStateForUndo();
+                        part.style.fill = selectedColor;
+                        soundManager.playFlip();
+                        createSparkleEffect(e.clientX, e.clientY, selectedColor);
+                    }
+                };
+            });
+
+            updatePointerEvents();
+        }
+
+        /* -------------------------------------------------------------------------
+         * 6. TOOL SELECTION & EVENT ROUTING
+         * ------------------------------------------------------------------------- */
+        function setTool(toolName) {
+            currentTool = toolName;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`tool-${toolName}`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (toolName === 'stamp') {
+                stampSelectRow.style.display = 'flex';
+                brushSizeRow.style.display = 'none';
+            } else if (toolName === 'brush' || toolName === 'sparkle' || toolName === 'eraser') {
+                brushSizeRow.style.display = 'flex';
+                stampSelectRow.style.display = 'none';
+            } else {
+                brushSizeRow.style.display = 'none';
+                stampSelectRow.style.display = 'none';
+            }
+
+            updatePointerEvents();
             soundManager.playClick();
+        }
+
+        function updatePointerEvents() {
+            if (currentTool === 'fill') {
+                // Let clicks pass straight through to Layer 1 SVG
+                drawCanvas.style.pointerEvents = 'none';
+            } else {
+                // Capture gestures on Layer 2 Drawing Canvas
+                drawCanvas.style.pointerEvents = 'auto';
+            }
+        }
+
+        document.getElementById('tool-fill').onclick = () => setTool('fill');
+        document.getElementById('tool-brush').onclick = () => setTool('brush');
+        document.getElementById('tool-sparkle').onclick = () => setTool('sparkle');
+        document.getElementById('tool-stamp').onclick = () => setTool('stamp');
+        document.getElementById('tool-eraser').onclick = () => setTool('eraser');
+
+        // Brush sizes
+        document.querySelectorAll('.size-dot-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.size-dot-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                brushSize = parseInt(btn.dataset.size, 10);
+                soundManager.playClick();
+            };
+        });
+
+        // Stamp selection
+        document.querySelectorAll('.sticker-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.sticker-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedStamp = btn.dataset.stamp;
+                soundManager.playClick();
+            };
+        });
+
+        // Category tabs
+        catTabs.querySelectorAll('.cat-tab-btn').forEach(tab => {
+            tab.onclick = () => {
+                catTabs.querySelectorAll('.cat-tab-btn').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                initGallery(tab.dataset.cat);
+                soundManager.playClick();
+            };
+        });
+
+        /* -------------------------------------------------------------------------
+         * 7. FREEHAND CANVAS DRAWING & STAMPS
+         * ------------------------------------------------------------------------- */
+        function getCanvasCoords(e) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scaleX = drawCanvas.width / rect.width;
+            const scaleY = drawCanvas.height / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY,
+                screenX: clientX,
+                screenY: clientY
+            };
+        }
+
+        function startDrawing(e) {
+            if (currentTool === 'fill') return;
+            e.preventDefault();
+            const coords = getCanvasCoords(e);
+            isDrawing = true;
+            lastX = coords.x;
+            lastY = coords.y;
+
+            saveStateForUndo();
+
+            if (currentTool === 'stamp') {
+                drawStamp(coords.x, coords.y);
+                createSparkleEffect(coords.screenX, coords.screenY, selectedColor);
+                soundManager.playCelebration();
+            } else {
+                drawStroke(coords.x, coords.y);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing || currentTool === 'fill' || currentTool === 'stamp') return;
+            e.preventDefault();
+            const coords = getCanvasCoords(e);
+            drawStroke(coords.x, coords.y);
+            lastX = coords.x;
+            lastY = coords.y;
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+        }
+
+        function drawStroke(x, y) {
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.lineWidth = brushSize * 1.6;
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.stroke();
+            } else if (currentTool === 'sparkle') {
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = brushSize;
+                ctx.strokeStyle = selectedColor;
+                ctx.shadowColor = selectedColor;
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Scatter glowing sparkle dots
+                for (let i = 0; i < 3; i++) {
+                    const sx = x + (Math.random() - 0.5) * brushSize * 2.5;
+                    const sy = y + (Math.random() - 0.5) * brushSize * 2.5;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, Math.random() * 3 + 1, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else {
+                // Normal freehand brush
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.lineWidth = brushSize;
+                ctx.strokeStyle = selectedColor;
+                ctx.stroke();
+            }
+        }
+
+        function drawStamp(x, y) {
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.font = `${brushSize * 2.5}px 'Segoe UI Emoji', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(selectedStamp, x, y);
+        }
+
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        drawCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+        drawCanvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', stopDrawing);
+
+        /* -------------------------------------------------------------------------
+         * 8. SPARKLE ANIMATION EFFECT
+         * ------------------------------------------------------------------------- */
+        function createSparkleEffect(x, y, color) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle-fx';
+            sparkle.style.left = `${x - 15}px`;
+            sparkle.style.top = `${y - 15}px`;
+            sparkle.style.width = '30px';
+            sparkle.style.height = '30px';
+            sparkle.style.background = `radial-gradient(circle, #ffffff 10%, ${color} 70%, transparent 90%)`;
+            document.body.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 500);
+        }
+
+        /* -------------------------------------------------------------------------
+         * 9. UNDO & CLEAR
+         * ------------------------------------------------------------------------- */
+        function saveStateForUndo() {
+            // Snapshot canvas and SVG fills
+            const canvasData = ctx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+            const fills = Array.from(svgFill.querySelectorAll('.colorable-part')).map(p => p.style.fill || '#ffffff');
+
+            undoStack.push({ canvasData, fills });
+            if (undoStack.length > MAX_UNDO) undoStack.shift();
+        }
+
+        function undo() {
+            if (undoStack.length === 0) {
+                soundManager.playWrong();
+                return;
+            }
+            const previous = undoStack.pop();
+            ctx.putImageData(previous.canvasData, 0, 0);
+            const parts = svgFill.querySelectorAll('.colorable-part');
+            previous.fills.forEach((fillColor, i) => {
+                if (parts[i]) parts[i].style.fill = fillColor;
+            });
+            soundManager.playClick();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+            svgFill.querySelectorAll('.colorable-part').forEach(p => p.style.fill = '#ffffff');
+            undoStack.length = 0;
+        }
+
+        document.getElementById('btn-undo').onclick = undo;
+        const btnRestart = document.getElementById('btn-restart') || document.getElementById('btn-clear');
+        if (btnRestart) {
+            btnRestart.onclick = () => {
+                clearCanvas();
+                soundManager.playClick();
+                soundManager.speakThai('ล้างกระดาษใหม่แล้วจ้า');
+            };
+        }
+
+        /* -------------------------------------------------------------------------
+         * 10. SAVE / DOWNLOAD IMAGE AS PNG
+         * ------------------------------------------------------------------------- */
+        document.getElementById('btn-save').onclick = () => {
+            soundManager.playCheer();
+            soundManager.speakThai('ระบายสีสวยมาก บันทึกรูปภาพแล้วนะ');
+
+            // Offscreen master export canvas (600x600)
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = 600;
+            exportCanvas.height = 600;
+            const expCtx = exportCanvas.getContext('2d');
+
+            // 1. Soft pastel background
+            expCtx.fillStyle = '#ffffff';
+            expCtx.fillRect(0, 0, 600, 600);
+
+            // 2. Render SVG Fill Layer onto Canvas via Blob
+            const svgData = new XMLSerializer().serializeToString(svgFill);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const URL = window.URL || window.webkitURL || window;
+            const blobURL = URL.createObjectURL(svgBlob);
+
+            const fillImg = new Image();
+            fillImg.onload = () => {
+                expCtx.drawImage(fillImg, 0, 0, 600, 600);
+                URL.revokeObjectURL(blobURL);
+
+                // 3. Draw User's Freehand Painting & Stickers Layer
+                expCtx.drawImage(drawCanvas, 0, 0, 600, 600);
+
+                // 4. Render Outline Layer over the top
+                const outlineData = new XMLSerializer().serializeToString(svgOutline);
+                const outlineBlob = new Blob([outlineData], { type: 'image/svg+xml;charset=utf-8' });
+                const outlineBlobURL = URL.createObjectURL(outlineBlob);
+
+                const outlineImg = new Image();
+                outlineImg.onload = () => {
+                    expCtx.drawImage(outlineImg, 0, 0, 600, 600);
+                    URL.revokeObjectURL(outlineBlobURL);
+
+                    // 5. Trigger download link
+                    const link = document.createElement('a');
+                    link.download = `art-${DRAWINGS[currentDrawingIndex].id}.png`;
+                    link.href = exportCanvas.toDataURL('image/png');
+                    link.click();
+                };
+                outlineImg.src = outlineBlobURL;
+            };
+            fillImg.src = blobURL;
         };
 
+        /* -------------------------------------------------------------------------
+         * 11. BOOTSTRAP
+         * ------------------------------------------------------------------------- */
         document.body.onclick = () => soundManager.init();
         initPalette();
+        initGallery();
+        loadCurrentDrawing();
     </script>
 </body>
 </html>
