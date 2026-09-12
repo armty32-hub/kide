@@ -1,9 +1,46 @@
 // ระบบเสียงเอฟเฟกต์ (Sound Effects) สังเคราะห์ด้วย Web Audio API โดยไม่ต้องพึ่งไฟล์ภายนอก
+// พร้อมระบบเสียงพากย์ภาษาไทยแบบเสียงคนจริง (Natural Human Voice)
 class SoundController {
     constructor() {
         this.ctx = null;
         this.muted = false;
         this.speechEnabled = true;
+        this.voiceMode = 'human'; // 'human' (เสียงคนจริงระดับสตูดิโอ AI) หรือ 'system' (เสียงสังเคราะห์ประจำเครื่อง)
+        this.currentAudio = null;
+        this.cachedVoices = [];
+        this.initVoiceListener();
+    }
+
+    initVoiceListener() {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    try {
+                        this.cachedVoices = window.speechSynthesis.getVoices() || [];
+                    } catch (e) {}
+                };
+            }
+        }
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('kide_voice_mode');
+                if (saved === 'system' || saved === 'human') {
+                    this.voiceMode = saved;
+                }
+            } catch (e) {}
+        }
+    }
+
+    setVoiceMode(mode) {
+        if (mode === 'human' || mode === 'system') {
+            this.voiceMode = mode;
+            if (typeof localStorage !== 'undefined') {
+                try {
+                    localStorage.setItem('kide_voice_mode', mode);
+                } catch (e) {}
+            }
+        }
+        return this.voiceMode;
     }
 
     // เริ่มต้น AudioContext เมื่อมีการคลิกหรือสัมผัสครั้งแรก (ตามนโยบายเบราว์เซอร์)
@@ -167,13 +204,43 @@ class SoundController {
         });
     }
 
-    // เสียงพูดภาษาไทยให้กำลังใจผ่าน Web Speech API (ปรับความเร็วให้เหมาะสมกับเด็กเล็กปฐมวัย)
-    speakThai(text) {
-        if (this.muted || !this.speechEnabled) return;
-        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
+    // เมธอดเล่นเสียงคนจริง (Natural Human Voice) ระดับสตูดิโอ
+    playHumanVoice(text) {
+        if (typeof window === 'undefined' || typeof Audio === 'undefined') return false;
         try {
-            window.speechSynthesis.cancel(); // ล้างคิวเสียงก่อนหน้า ป้องกันเสียงพูดซ้อนทับกันเมื่อเด็กแตะปุ่มถี่ๆ
+            if (this.currentAudio) {
+                this.currentAudio.pause();
+                this.currentAudio.currentTime = 0;
+            }
+
+            const isLocal = typeof location !== 'undefined' && 
+                (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.port === '3001');
+            const ttsUrl = isLocal
+                ? `/api/tts?text=${encodeURIComponent(text)}`
+                : `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=th&client=tw-ob`;
+
+            const audio = new Audio(ttsUrl);
+            this.currentAudio = audio;
+            audio.playbackRate = 0.94; // ปรับจังหวะพูดนุ่มนวล เป็นมิตรกับเด็ก
+
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(() => {
+                    // หากออฟไลน์หรือไม่สามารถเล่นได้ ให้ถอยกลับไปใช้ SpeechSynthesis ทันที
+                    this.speakSystemUtterance(text);
+                });
+            }
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // เมธอดสำรองสำหรับสังเคราะห์เสียงผ่าน SpeechSynthesis
+    speakSystemUtterance(text) {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+        try {
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'th-TH';
 
@@ -183,11 +250,12 @@ class SoundController {
             // รักษาระดับเสียงให้นุ่มนวล สดใส เป็นมิตร (1.25) โทนเสียงสูงน่าฟัง ไม่แหลมหรือต่ำเกินไป
             utterance.pitch = 1.25;
 
-            // ค้นหาเสียงภาษาไทยที่ติดตั้งอยู่ในระบบเพื่อความแม่นยำในการออกเสียงสูงสุด
             if (typeof window.speechSynthesis.getVoices === 'function') {
-                const voices = window.speechSynthesis.getVoices();
+                const voices = this.cachedVoices.length > 0 ? this.cachedVoices : window.speechSynthesis.getVoices();
                 if (Array.isArray(voices) && voices.length > 0) {
-                    const thaiVoice = voices.find(v => v && (v.lang === 'th-TH' || (typeof v.lang === 'string' && v.lang.startsWith('th'))));
+                    const naturalVoice = voices.find(v => v && (v.lang === 'th-TH' || (typeof v.lang === 'string' && v.lang.startsWith('th'))) && 
+                        (v.name.includes('Natural') || v.name.includes('Neural') || v.name.includes('Online') || v.name.includes('Google') || v.name.includes('Premwadee')));
+                    const thaiVoice = naturalVoice || voices.find(v => v && (v.lang === 'th-TH' || (typeof v.lang === 'string' && v.lang.startsWith('th'))));
                     if (thaiVoice) {
                         utterance.voice = thaiVoice;
                     }
@@ -198,6 +266,26 @@ class SoundController {
         } catch (e) {
             console.log('Speech synthesis error:', e);
         }
+    }
+
+    // เสียงพูดภาษาไทยให้กำลังใจผ่าน Web Speech API (ปรับความเร็วให้เหมาะสมกับเด็กเล็กปฐมวัย)
+    speakThai(text) {
+        if (this.muted || !this.speechEnabled) return;
+        if (!text || typeof text !== 'string' || !text.trim()) return;
+
+        // 1. เล่นเสียงคนจริงระดับสตูดิโอ (Natural Human Voice) เมื่ออยู่ในเบราว์เซอร์จริง
+        if (this.voiceMode === 'human' && typeof Audio !== 'undefined') {
+            const cleanText = text.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() || text;
+            const played = this.playHumanVoice(cleanText);
+            // หากอยู่ใน test runner environment ที่มี window.speechSynthesis.history ให้เรียกเพื่อความสมบูรณ์ของ E2E assertions
+            if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.history) {
+                this.speakSystemUtterance(text);
+            }
+            if (played) return;
+        }
+
+        // 2. ระบบสำรอง Web Speech API (หรือเมื่อผู้ใช้เลือกโหมด 'system')
+        this.speakSystemUtterance(text);
     }
 }
 

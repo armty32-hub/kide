@@ -69,7 +69,10 @@ const MIME_TYPES = {
     '.json': 'application/json',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
-    '.svg': 'image/svg+xml'
+    '.svg': 'image/svg+xml',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.ogg': 'audio/ogg'
 };
 
 async function startServer() {
@@ -114,6 +117,60 @@ async function startServer() {
                 res.writeHead(500, { 'Content-Type': 'text/plain' });
                 res.end('Error generating QR code');
             }
+            return;
+        }
+
+        // 3. API: Natural Human Voice TTS Proxy & Caching
+        if (pathname === '/api/tts') {
+            const text = parsedUrl.searchParams.get('text');
+            if (!text || !text.trim()) {
+                res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+                res.end('Missing text parameter');
+                return;
+            }
+
+            const cleanText = text.trim();
+            if (!globalThis.TTS_CACHE) globalThis.TTS_CACHE = new Map();
+            if (globalThis.TTS_CACHE.has(cleanText)) {
+                const cachedBuffer = globalThis.TTS_CACHE.get(cleanText);
+                res.writeHead(200, {
+                    'Content-Type': 'audio/mpeg',
+                    'Content-Length': cachedBuffer.length,
+                    'Cache-Control': 'public, max-age=86400'
+                });
+                res.end(cachedBuffer);
+                return;
+            }
+
+            const targetUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanText)}&tl=th&client=tw-ob`;
+            const https = require('https');
+            const reqGoogle = https.get(targetUrl, {
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+            }, (ttsRes) => {
+                if (ttsRes.statusCode !== 200) {
+                    res.writeHead(ttsRes.statusCode || 502, { 'Content-Type': 'text/plain' });
+                    res.end('TTS error');
+                    return;
+                }
+
+                const chunks = [];
+                ttsRes.on('data', chunk => chunks.push(chunk));
+                ttsRes.on('end', () => {
+                    const audioBuf = Buffer.concat(chunks);
+                    globalThis.TTS_CACHE.set(cleanText, audioBuf);
+                    res.writeHead(200, {
+                        'Content-Type': 'audio/mpeg',
+                        'Content-Length': audioBuf.length,
+                        'Cache-Control': 'public, max-age=86400'
+                    });
+                    res.end(audioBuf);
+                });
+            });
+
+            reqGoogle.on('error', () => {
+                res.writeHead(502, { 'Content-Type': 'text/plain' });
+                res.end('TTS fetch failed');
+            });
             return;
         }
 

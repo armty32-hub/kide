@@ -56,6 +56,34 @@ class ArcadeHub {
                 this.qrModal.classList.remove('active');
             }
         });
+
+        // สลับโหมดเสียงพากย์คนจริง / เสียงระบบ
+        const btnVoiceMode = document.getElementById('btn-voice-mode');
+        if (btnVoiceMode && typeof soundManager !== 'undefined') {
+            const updateVoiceBtn = () => {
+                if (soundManager.voiceMode === 'human') {
+                    btnVoiceMode.innerHTML = '<span>🎙️</span> <span id="voice-mode-text">เสียงคนจริง</span>';
+                    btnVoiceMode.style.borderColor = '#10b981';
+                    btnVoiceMode.style.color = '#047857';
+                } else {
+                    btnVoiceMode.innerHTML = '<span>🤖</span> <span id="voice-mode-text">เสียงระบบ</span>';
+                    btnVoiceMode.style.borderColor = '#64748b';
+                    btnVoiceMode.style.color = '#475569';
+                }
+            };
+            updateVoiceBtn();
+            btnVoiceMode.addEventListener('click', () => {
+                const nextMode = soundManager.voiceMode === 'human' ? 'system' : 'human';
+                soundManager.setVoiceMode(nextMode);
+                updateVoiceBtn();
+                soundManager.playClick();
+                if (nextMode === 'human') {
+                    soundManager.speakThai('เปลี่ยนเป็นเสียงคนจริงแล้วจ้า');
+                } else {
+                    soundManager.speakThai('เปลี่ยนเป็นเสียงระบบแล้วครับ');
+                }
+            });
+        }
     }
 
     initWebSocket() {
