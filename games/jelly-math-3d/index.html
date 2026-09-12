@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jelly Math 3D แดนเยลลี่บวกเลข 3 มิติ - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        :root {
+            --jelly-cyan: #06b6d4;
+            --jelly-pink: #ec4899;
+            --jelly-yellow: #f59e0b;
+            --jelly-green: #10b981;
+            --jelly-purple: #8b5cf6;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f2fe 0%, #fdf2f8 50%, #f0fdf4 100%);
+            overflow-x: hidden;
+        }
+
+        /* ส่วนหัวและแถบควบคุม */
+        .stage-3d-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ป้ายสมการ 3D สไตล์กลาสมอร์ฟิซึม */
+        .equation-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 12px 32px rgba(14, 165, 233, 0.18), inset 0 2px 4px rgba(255, 255, 255, 0.8);
+            border-radius: 36px;
+            padding: 14px 36px;
+            margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            animation: floatBanner 3s ease-in-out infinite;
+        }
+
+        @keyframes floatBanner {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .eq-display {
+            font-size: 2.4rem;
+            font-weight: 900;
+            color: #0369a1;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 10px rgba(3, 105, 161, 0.15);
+        }
+
+        .eq-badge {
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            padding: 6px 16px;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        /* กรอบแสดงผล WebGL 3D Canvas */
+        .viewport-3d-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 520px;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 48px rgba(15, 23, 42, 0.16), 0 0 0 6px #ffffff;
+            background: #0f172a;
+            touch-action: none;
+        }
+
+        #webgl-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+
+        #webgl-canvas:active {
+            cursor: grabbing;
+        }
+
+        /* แถบคำใบ้ช่วยเล่น */
+        .hint-pill {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            color: #ffffff;
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            pointer-events: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+
+        /* แผงตั้งค่าความยากและจำนวนข้อ */
+        .settings-bar {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            padding: 14px 20px;
+            margin: 12px auto;
+            max-width: 860px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            border: 3px solid #bae6fd;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .setting-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0369a1;
+            min-width: 110px;
+        }
+
+        .setting-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .level-chip, .station-chip {
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .level-chip:hover, .station-chip:hover {
+            border-color: #0284c7;
+            color: #0284c7;
+        }
+
+        .level-chip.active, .station-chip.active {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0369a1;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+            transform: scale(1.03);
+        }
+
+        .custom-station-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0f9ff;
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid #bae6fd;
+        }
+
+        .custom-station-wrap input[type="range"] {
+            accent-color: #0284c7;
+            cursor: pointer;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #0284c7, #6366f1);
+            width: 10%;
+            transition: width 0.3s ease;
+        }
+    </style>
+    <!-- โหลด Three.js r128 สำหรับเรนเดอร์กราฟิก 3D WebGL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <div>
+                <h1 class="game-title">Jelly Math 3D</h1>
+                <div style="font-size: 1rem; color: #0284c7; font-weight: 700; margin-top: 4px;">
+                    แดนเยลลี่บวกเลข 3 มิติ • หมุนได้รอบทิศ ไร้ไอคอน ✨
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" id="btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แผงตั้งค่าระดับความยากและจำนวนสถานี -->
+    <div class="settings-bar">
+        <div class="setting-group">
+            <span class="setting-title">🎚️ ความยาก:</span>
+            <div class="setting-options">
+                <button class="level-chip active" data-level="easy" onclick="changeDifficulty('easy')">🌱 ง่าย (ผลรวม ≤ 5)</button>
+                <button class="level-chip" data-level="medium" onclick="changeDifficulty('medium')">🌿 ปานกลาง (ผลรวม ≤ 10)</button>
+                <button class="level-chip" data-level="hard" onclick="changeDifficulty('hard')">🔥 ท้าทาย (ผลรวม ≤ 20)</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-title">🚩 จำนวนข้อ:</span>
+            <div class="setting-options">
+                <button class="station-chip" data-stations="5" onclick="changeStations(5)">5 ข้อ</button>
+                <button class="station-chip active" data-stations="10" onclick="changeStations(10)">10 ข้อ</button>
+                <button class="station-chip" data-stations="20" onclick="changeStations(20)">20 ข้อ</button>
+                <button class="station-chip" data-stations="30" onclick="changeStations(30)">30 ข้อ</button>
+                <button class="station-chip" data-stations="50" onclick="changeStations(50)">50 ข้อ</button>
+                <div class="custom-station-wrap">
+                    <span style="font-size:0.88rem;font-weight:700;color:#0369a1;">สไลเดอร์:</span>
+                    <input type="range" id="station-slider" min="5" max="50" step="5" value="10" oninput="onStationSlider(this.value)">
+                    <span id="slider-val" style="font-weight:800;color:#0284c7;min-width:28px;">10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span>ข้อที่: <strong id="current-q">1</strong> / <span id="total-q">10</span></span>
+        </div>
+        <div class="status-item">
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+        <div class="status-item">
+            <span>สตรีค: <strong id="streak" style="color: #ea580c;">0 🔥</strong></span>
+        </div>
+    </div>
+
+    <main class="stage-3d-wrapper">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <div class="equation-panel">
+            <div class="eq-display" id="equation-text">2 + 3 = ?</div>
+            <div class="eq-badge">แตะก้อนเยลลี่คำตอบ 3D</div>
+        </div>
+
+        <div class="viewport-3d-box">
+            <canvas id="webgl-canvas"></canvas>
+            <div class="hint-pill">✨ แตะเยลลี่ 3D เพื่อตอบ • ลากเมาส์หมุนดูโลก 3 มิติได้</div>
+        </div>
+    </main>
+
+    <!-- Modal เมื่อจบด่าน -->
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">ยอดนักคณิต 3 มิติ!</h2>
+            <p class="modal-subtitle">หนูเก่งมาก! ตอบสมการตัวเลขในแดนเยลลี่ 3D ได้ถูกต้องครบถ้วน!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #0284c7; margin: 12px 0;">
+                คะแนนรวม: <span id="final-score">0</span> คะแนน
+            </div>
+            <div style="display:flex;gap:12px;width:100%;margin-top:15px;flex-wrap:wrap;">
+                <button id="btn-next-level" class="btn-play-again" style="background:#0284c7;flex:1;min-width:180px;">🌟 เล่นด่านต่อไป</button>
+                <button id="btn-play-again" class="btn-play-again" style="background:#0d9488;flex:1;min-width:180px;">🔄 เริ่มเล่นใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        // ==========================================
+        // ระบบ Jelly Math 3D Engine (Three.js)
+        // ==========================================
+        let scene, camera, renderer, raycaster, mouse;
+        let islandGroup, jellyGroup, particleGroup, cloudsGroup;
+        let isDragging = false, prevMousePos = { x: 0, y: 0 };
+        let currentProblem = null;
+        let canAnswer = true;
+        let currentDifficulty = 'easy';
+        let totalStations = 10;
+        let currentQ = 0, score = 0, streak = 0;
+
+        const canvas = document.getElementById('webgl-canvas');
+        const eqText = document.getElementById('equation-text');
+        const qEl = document.getElementById('current-q');
+        const totalQEl = document.getElementById('total-q');
+        const scoreEl = document.getElementById('score');
+        const streakEl = document.getElementById('streak');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const victoryModal = document.getElementById('victory-modal');
+
+        // ตรวจสอบการเชื่อมต่อจอยมือถือผ่าน WebSocket
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'TAP_CARD' && canAnswer) {
+                        selectChoiceByIndex(data.index);
+                    }
+                } catch(err){}
+            };
+        } catch(e){}
+
+        // เริ่มต้นสร้างโลก 3D
+        function initThree() {
+            if (typeof THREE === 'undefined') {
+                initCanvasFallback();
+                return;
+            }
+
+            const width = canvas.clientWidth || 800;
+            const height = canvas.clientHeight || 500;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xdbeafe);
+            scene.fog = new THREE.FogExp2(0xdbeafe, 0.035);
+
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+            camera.position.set(0, 5, 11);
+            camera.lookAt(0, 1.2, 0);
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // แสงสว่างในฉาก 3 มิติ
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x86efac, 0.75);
+            scene.add(hemiLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.1);
+            sunLight.position.set(8, 14, 8);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 30;
+            sunLight.shadow.camera.left = -6;
+            sunLight.shadow.camera.right = 6;
+            sunLight.shadow.camera.top = 6;
+            sunLight.shadow.camera.bottom = -6;
+            scene.add(sunLight);
+
+            const ambientFill = new THREE.AmbientLight(0xffffff, 0.35);
+            scene.add(ambientFill);
+
+            // กลุ่มวัตถุในฉาก
+            islandGroup = new THREE.Group();
+            jellyGroup = new THREE.Group();
+            particleGroup = new THREE.Group();
+            cloudsGroup = new THREE.Group();
+
+            scene.add(islandGroup);
+            scene.add(jellyGroup);
+            scene.add(particleGroup);
+            scene.add(cloudsGroup);
+
+            createFloatingIsland();
+            createClouds();
+            setupInteractions();
+            animate();
+        }
+
+        // สร้างเกาะลอยฟ้า 3 มิติ
+        function createFloatingIsland() {
+            // ดินด้านล่าง (โคนคว่ำ)
+            const rockGeo = new THREE.ConeGeometry(4.2, 3.5, 7);
+            const rockMat = new THREE.MeshStandardMaterial({
+                color: 0x854d0e,
+                roughness: 0.9,
+                flatShading: true
+            });
+            const rock = new THREE.Mesh(rockGeo, rockMat);
+            rock.rotation.x = Math.PI;
+            rock.position.y = -1.6;
+            rock.receiveShadow = true;
+            islandGroup.add(rock);
+
+            // แผ่นหญ้าสีเขียวสดใสด้านบน
+            const grassGeo = new THREE.CylinderGeometry(4.2, 4.0, 0.8, 24);
+            const grassMat = new THREE.MeshStandardMaterial({
+                color: 0x4ade80,
+                roughness: 0.6,
+                flatShading: true
+            });
+            const grass = new THREE.Mesh(grassGeo, grassMat);
+            grass.position.y = 0.2;
+            grass.receiveShadow = true;
+            islandGroup.add(grass);
+
+            // ต้นไม้ 3D สไตล์ Low-Poly น่ารัก
+            const treePositions = [
+                { x: -3.0, z: -1.5, s: 0.9 },
+                { x: 2.8, z: -1.8, s: 1.1 },
+                { x: -2.5, z: 2.0, s: 0.75 },
+                { x: 3.2, z: 1.5, s: 0.85 }
+            ];
+
+            treePositions.forEach(p => {
+                const tree = createCuteTree();
+                tree.position.set(p.x, 0.6, p.z);
+                tree.scale.set(p.s, p.s, p.s);
+                islandGroup.add(tree);
+            });
+        }
+
+        function createCuteTree() {
+            const group = new THREE.Group();
+            // ลำต้น
+            const trunkGeo = new THREE.CylinderGeometry(0.18, 0.25, 0.9, 8);
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.8 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 0.45;
+            trunk.castShadow = true;
+            group.add(trunk);
+
+            // พุ่มใบไม้ทรงกลม
+            const leavesGeo = new THREE.DodecahedronGeometry(0.75, 1);
+            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.4, flatShading: true });
+            const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+            leaves.position.y = 1.25;
+            leaves.castShadow = true;
+            group.add(leaves);
+            return group;
+        }
+
+        function createClouds() {
+            for (let i = 0; i < 4; i++) {
+                const cloud = new THREE.Group();
+                const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, flatShading: true });
+                for (let j = 0; j < 5; j++) {
+                    const puff = new THREE.Mesh(new THREE.DodecahedronGeometry(0.7 + Math.random() * 0.4), cloudMat);
+                    puff.position.set((j - 2) * 0.5, Math.sin(j) * 0.2, (Math.random() - 0.5) * 0.4);
+                    cloud.add(puff);
+                }
+                const angle = (i / 4) * Math.PI * 2;
+                cloud.position.set(Math.cos(angle) * 9, 3 + Math.random() * 2, Math.sin(angle) * 9);
+                cloudsGroup.add(cloud);
+            }
+        }
+
+        // สร้างเทกซ์เจอร์ตัวเลขคมชัดสำหรับเยลลี่ 3D
+        function createNumberTexture(num, baseColorHex) {
+            const canvas2d = document.createElement('canvas');
+            canvas2d.width = 256;
+            canvas2d.height = 256;
+            const ctx = canvas2d.getContext('2d');
+
+            // พื้นหลังทรงกลมไล่เฉดสี
+            const grad = ctx.createRadialGradient(100, 90, 10, 128, 128, 120);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.3, baseColorHex);
+            grad.addColorStop(1, shadeColor(baseColorHex, -25));
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(128, 128, 120, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ตัวเลขสีขาวขอบเงาหนา
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 110px "Chakra Petch", "Sarabun", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 4;
+            ctx.fillText(String(num), 128, 134);
+
+            return new THREE.CanvasTexture(canvas2d);
+        }
+
+        function shadeColor(color, percent) {
+            let num = parseInt(color.replace('#',''), 16),
+            amt = Math.round(2.55 * percent),
+            R = (num >> 16) + amt,
+            B = (num >> 8 & 0x00FF) + amt,
+            G = (num & 0x0000FF) + amt;
+            return '#' + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (B<255?B<1?0:B:255)*0x100 + (G<255?G<1?0:G:255)).toString(16).slice(1);
+        }
+
+        // สปอนก้อนเยลลี่ 3D ตามตัวเลือกของโจทย์
+        const JELLY_COLORS = ['#06b6d4', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6'];
+
+        function spawnJellies(choices) {
+            // ล้างเยลลี่เดิม
+            while(jellyGroup.children.length > 0) {
+                const child = jellyGroup.children[0];
+                jellyGroup.remove(child);
+            }
+
+            const count = choices.length;
+            const spacing = count === 2 ? 3.0 : (count === 3 ? 2.5 : 2.0);
+            const startX = -((count - 1) * spacing) / 2;
+
+            choices.forEach((val, idx) => {
+                const colorHex = JELLY_COLORS[idx % JELLY_COLORS.length];
+                const texture = createNumberTexture(val, colorHex);
+
+                const geo = new THREE.SphereGeometry(0.85, 32, 32);
+                const mat = new THREE.MeshStandardMaterial({
+                    map: texture,
+                    roughness: 0.15,
+                    metalness: 0.1,
+                    bumpScale: 0.05
+                });
+
+                const jelly = new THREE.Mesh(geo, mat);
+                const posX = startX + idx * spacing;
+                jelly.position.set(posX, 2.2, 0);
+                jelly.castShadow = true;
+                jelly.receiveShadow = true;
+
+                // ข้อมูลของเยลลี่
+                jelly.userData = {
+                    index: idx,
+                    val: val,
+                    initialY: 2.2,
+                    phase: idx * 1.5,
+                    scale: 1,
+                    squash: 1
+                };
+
+                jellyGroup.add(jelly);
+            });
+
+            syncPhone(choices);
+        }
+
+        // อนุภาคแตกกระจาย 3 มิติ (3D Starburst Particles)
+        function spawn3DParticles(pos, colorHex) {
+            const pCount = 35;
+            const geo = new THREE.DodecahedronGeometry(0.14, 0);
+            const mat = new THREE.MeshStandardMaterial({
+                color: new THREE.Color(colorHex),
+                roughness: 0.2,
+                emissive: new THREE.Color(colorHex),
+                emissiveIntensity: 0.6
+            });
+
+            for (let i = 0; i < pCount; i++) {
+                const p = new THREE.Mesh(geo, mat);
+                p.position.copy(pos);
+                const speed = 2.5 + Math.random() * 4.5;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = (Math.random() - 0.5) * Math.PI;
+                p.userData = {
+                    vel: new THREE.Vector3(
+                        Math.cos(theta) * Math.cos(phi) * speed,
+                        (Math.sin(phi) * speed) + 3.0,
+                        Math.sin(theta) * Math.cos(phi) * speed
+                    ),
+                    life: 1.0
+                };
+                particleGroup.add(p);
+            }
+        }
+
+        // สร้างโจทย์คณิตศาสตร์ใหม่
+        function generateProblem() {
+            let maxVal = 5;
+            if (currentDifficulty === 'medium') maxVal = 10;
+            else if (currentDifficulty === 'hard') maxVal = 20;
+
+            const a = 1 + Math.floor(Math.random() * (maxVal - 1));
+            const b = 1 + Math.floor(Math.random() * (maxVal - a));
+            const ans = a + b;
+
+            let choicesCount = 3;
+            if (currentDifficulty === 'hard') choicesCount = 4;
+
+            const choices = [ans];
+            while (choices.length < choicesCount) {
+                const delta = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.floor(Math.random() * 3));
+                const wrong = Math.max(1, ans + delta);
+                if (!choices.includes(wrong)) {
+                    choices.push(wrong);
+                }
+            }
+            choices.sort(() => 0.5 - Math.random());
+
+            return { a, b, ans, choices };
+        }
+
+        function loadQuestion() {
+            canAnswer = true;
+            qEl.textContent = currentQ + 1;
+            updateProgressBar();
+
+            currentProblem = generateProblem();
+            eqText.textContent = `${currentProblem.a} + ${currentProblem.b} = ?`;
+
+            spawnJellies(currentProblem.choices);
+            soundManager.speakThai(`โจทย์คือ ${currentProblem.a} บวก ${currentProblem.b} เท่ากับเท่าไหร่เอ่ย? เลือกเยลลี่คำตอบเลยจ้า`);
+        }
+
+        function selectChoiceByIndex(idx) {
+            if (!canAnswer || !currentProblem) return;
+            const chosenVal = currentProblem.choices[idx];
+            handleAnswer(chosenVal, idx);
+        }
+
+        function handleAnswer(chosenVal, idx) {
+            if (!canAnswer) return;
+            const isCorrect = (chosenVal === currentProblem.ans);
+
+            const targetJelly = jellyGroup.children.find(j => j.userData.index === idx);
+
+            if (isCorrect) {
+                canAnswer = false;
+                streak++;
+                score += (10 + (streak > 1 ? streak * 2 : 0));
+                scoreEl.textContent = score;
+                streakEl.textContent = `${streak} 🔥`;
+
+                soundManager.playMatch();
+                soundManager.speakThai(`ถูกต้องแล้วจ้า! ${currentProblem.a} บวก ${currentProblem.b} ได้ ${chosenVal} เก่งมาก!`);
+
+                if (targetJelly) {
+                    spawn3DParticles(targetJelly.position, JELLY_COLORS[idx % JELLY_COLORS.length]);
+                    // เอฟเฟกต์ยุบตัวแล้วแตกหาย
+                    targetJelly.scale.set(1.4, 0.6, 1.4);
+                    setTimeout(() => {
+                        jellyGroup.remove(targetJelly);
+                    }, 120);
+                }
+
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < totalStations) {
+                        loadQuestion();
+                    } else {
+                        finishGame();
+                    }
+                }, 1600);
+            } else {
+                streak = 0;
+                streakEl.textContent = `0 🔥`;
+                soundManager.playMismatch();
+                soundManager.speakThai(`ยังไม่ใช่นะจ๊ะ ลองเลือกก้อนเยลลี่อื่นดูใหม่นะ`);
+
+                if (targetJelly) {
+                    // เยลลี่สั่นดุ๊กดิ๊ก
+                    const origX = targetJelly.position.x;
+                    targetJelly.position.x = origX + 0.25;
+                    setTimeout(() => targetJelly.position.x = origX - 0.25, 80);
+                    setTimeout(() => targetJelly.position.x = origX, 160);
+                }
+            }
+        }
+
+        function finishGame() {
+            soundManager.playWin();
+            document.getElementById('final-score').textContent = score;
+            victoryModal.classList.add('active');
+            updateProgressBar();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'GAME_WON' }));
+            }
+        }
+
+        function updateProgressBar() {
+            if (!progressBarFill) return;
+            const pct = Math.min(100, Math.round(((currentQ) / totalStations) * 100));
+            progressBarFill.style.width = `${pct}%`;
+        }
+
+        // จัดการคลิกและทัชบน 3D Canvas
+        function setupInteractions() {
+            function onPointerDown(e) {
+                isDragging = true;
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                prevMousePos = { x: clientX, y: clientY };
+
+                // คำนวณตำแหน่งเมาส์ในระบบ Normalized Device Coordinates (-1 ถึง +1)
+                mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(jellyGroup.children);
+
+                if (intersects.length > 0 && canAnswer) {
+                    const hit = intersects[0].object;
+                    hit.scale.set(1.25, 0.75, 1.25);
+                    selectChoiceByIndex(hit.userData.index);
+                    isDragging = false; // ถ้าคลิกโดนเยลลี่ ไม่ต้องหมุนฉาก
+                }
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const deltaX = clientX - prevMousePos.x;
+                prevMousePos.x = clientX;
+                // หมุนเกาะตามการลากเมาส์
+                islandGroup.rotation.y += deltaX * 0.008;
+                jellyGroup.rotation.y += deltaX * 0.008;
+            }
+
+            function onPointerUp() {
+                isDragging = false;
+            }
+
+            canvas.addEventListener('mousedown', onPointerDown);
+            window.addEventListener('mousemove', onPointerMove);
+            window.addEventListener('mouseup', onPointerUp);
+
+            canvas.addEventListener('touchstart', onPointerDown, { passive: true });
+            window.addEventListener('touchmove', onPointerMove, { passive: true });
+            window.addEventListener('touchend', onPointerUp);
+
+            window.addEventListener('resize', () => {
+                if (!camera || !renderer) return;
+                const w = canvas.clientWidth || 800;
+                const h = canvas.clientHeight || 500;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+        }
+
+        // Animation Loop 3D
+        let clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // ลอยขึ้นลงของก้อนเยลลี่ 3D
+            jellyGroup.children.forEach(j => {
+                const u = j.userData;
+                j.position.y = u.initialY + Math.sin(time * 3 + u.phase) * 0.22;
+                j.rotation.y = Math.sin(time * 1.5 + u.phase) * 0.2;
+                // คืนรูปทรงปกติหลังโดนแตะ
+                j.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+            });
+
+            // เมฆลอยหมุนรอบเกาะ
+            cloudsGroup.rotation.y += 0.0015;
+
+            // อัปเดตฟิสิกส์อนุภาคแตกกระจาย 3D
+            for (let i = particleGroup.children.length - 1; i >= 0; i--) {
+                const p = particleGroup.children[i];
+                p.position.addScaledVector(p.userData.vel, dt);
+                p.userData.vel.y -= 9.8 * dt; // แรงโน้มถ่วง
+                p.userData.life -= dt * 1.6;
+                p.scale.setScalar(p.userData.life);
+                if (p.userData.life <= 0) {
+                    particleGroup.remove(p);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // เชื่อมต่อจอยมือถือ
+        function syncPhone(choices) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: choices.length,
+                    matchedPairs: currentQ,
+                    cards: choices.map((val, i) => ({
+                        index: i,
+                        emoji: '🧊',
+                        name: `${val}`
+                    }))
+                }));
+            }
+        }
+
+        // ฟังก์ชันตั้งค่าความยากและสถานี
+        function changeDifficulty(level) {
+            currentDifficulty = level;
+            document.querySelectorAll('.level-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.level === level);
+            });
+            initSession(true);
+        }
+
+        function changeStations(num) {
+            totalStations = parseInt(num, 10);
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            const slider = document.getElementById('station-slider');
+            const sliderVal = document.getElementById('slider-val');
+            if (slider) slider.value = totalStations;
+            if (sliderVal) sliderVal.textContent = totalStations;
+            initSession(true);
+        }
+
+        function onStationSlider(val) {
+            const num = parseInt(val, 10);
+            const sliderVal = document.getElementById('slider-val');
+            if (sliderVal) sliderVal.textContent = num;
+            totalStations = num;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === num);
+            });
+            initSession(true);
+        }
+
+        function initSession(resetScore = true) {
+            currentQ = 0;
+            if (resetScore) {
+                score = 0;
+                streak = 0;
+                scoreEl.textContent = '0';
+                streakEl.textContent = '0 🔥';
+            }
+            if (totalQEl) totalQEl.textContent = totalStations;
+            loadQuestion();
+        }
+
+        // ระบบ Canvas Fallback กรณีเบราว์เซอร์ไม่รองรับ WebGL
+        function initCanvasFallback() {
+            const ctx = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 500;
+            function draw2DFallback() {
+                ctx.fillStyle = '#e0f2fe';
+                ctx.fillRect(0, 0, 800, 500);
+                ctx.fillStyle = '#0369a1';
+                ctx.font = 'bold 24px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('กำลังโหลดแดนเยลลี่ 3D...', 400, 250);
+            }
+            draw2DFallback();
+        }
+
+        // ผูกปุ่มการทำงาน
+        document.getElementById('btn-restart').onclick = () => initSession(true);
+        document.getElementById('btn-play-again').onclick = () => { victoryModal.classList.remove('active'); initSession(true); };
+        document.getElementById('btn-next-level').onclick = () => { victoryModal.classList.remove('active'); initSession(false); };
+        document.body.onclick = () => soundManager.init();
+
+        // เริ่มเกม
+        window.addEventListener('load', () => {
+            initThree();
+            initSession(true);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Monster Munch โบโบ้ป้อนเลขแอนิเมชัน - สวนสนุกเสริมพัฒนาการ</title>
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        :root {
+            --bobo-mint: #2dd4bf;
+            --bobo-dark: #0f766e;
+            --bg-picnic: #fef08a;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fef9c3 0%, #ecfdf5 50%, #e0f2fe 100%);
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .munch-stage-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ป้ายสมการไม้ปิกนิก */
+        .picnic-banner {
+            background: #ffffff;
+            border-radius: 36px;
+            padding: 12px 36px;
+            border: 4px solid #fde047;
+            box-shadow: 0 10px 25px rgba(234, 179, 8, 0.2);
+            margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .picnic-eq {
+            font-size: 2.3rem;
+            font-weight: 900;
+            color: #854d0e;
+            letter-spacing: 2px;
+        }
+
+        .picnic-badge {
+            background: #facc15;
+            color: #713f12;
+            font-size: 1.05rem;
+            font-weight: 800;
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        /* กรอบ Canvas โบโบ้แอนิเมชัน */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 520px;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12), 0 0 0 6px #ffffff;
+            background: #f8fafc;
+            touch-action: none;
+        }
+
+        #munch-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        .hint-bar {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(8px);
+            color: #ffffff;
+            padding: 6px 20px;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* แผงตั้งค่า */
+        .settings-bar {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 24px;
+            padding: 14px 20px;
+            margin: 12px auto;
+            max-width: 860px;
+            width: 100%;
+            box-shadow: var(--shadow-soft);
+            border: 3px solid #fef08a;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .setting-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #854d0e;
+            min-width: 110px;
+        }
+
+        .setting-options {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .level-chip, .station-chip {
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 2px solid #cbd5e1;
+            background: #f8fafc;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .level-chip:hover, .station-chip:hover {
+            border-color: #eab308;
+            color: #ca8a04;
+        }
+
+        .level-chip.active, .station-chip.active {
+            background: #eab308;
+            color: #ffffff;
+            border-color: #ca8a04;
+            box-shadow: 0 4px 10px rgba(202, 138, 4, 0.3);
+            transform: scale(1.03);
+        }
+
+        .custom-station-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fefce8;
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid #fef08a;
+        }
+
+        .custom-station-wrap input[type="range"] {
+            accent-color: #eab308;
+            cursor: pointer;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #facc15, #10b981, #06b6d4);
+            width: 10%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="title-container">
+            <div>
+                <h1 class="game-title">Monster Munch</h1>
+                <div style="font-size: 1rem; color: #854d0e; font-weight: 700; margin-top: 4px;">
+                    โบโบ้ป้อนเลขแอนิเมชัน • กราฟิกเวกเตอร์มีชีวิต ไร้ไอคอน ✨
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="action-buttons">
+            <a href="/" class="btn-icon btn-home" id="btn-home" title="กลับหน้าหลัก">
+                <span>🏠</span> <span class="btn-text">กลับหน้าหลัก</span>
+            </a>
+            <button id="btn-restart" class="btn-icon" title="เริ่มใหม่">
+                <span>🔄</span> <span class="btn-text">เริ่มใหม่</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- แผงตั้งค่าระดับความยากและจำนวนสถานี -->
+    <div class="settings-bar">
+        <div class="setting-group">
+            <span class="setting-title">🎚️ ความยาก:</span>
+            <div class="setting-options">
+                <button class="level-chip active" data-level="easy" onclick="changeDifficulty('easy')">🌱 ง่าย (ผลรวม ≤ 5)</button>
+                <button class="level-chip" data-level="medium" onclick="changeDifficulty('medium')">🌿 ปานกลาง (ผลรวม ≤ 10)</button>
+                <button class="level-chip" data-level="hard" onclick="changeDifficulty('hard')">🔥 ท้าทาย (ผลรวม ≤ 20)</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-title">🚩 จำนวนข้อ:</span>
+            <div class="setting-options">
+                <button class="station-chip" data-stations="5" onclick="changeStations(5)">5 ข้อ</button>
+                <button class="station-chip active" data-stations="10" onclick="changeStations(10)">10 ข้อ</button>
+                <button class="station-chip" data-stations="20" onclick="changeStations(20)">20 ข้อ</button>
+                <button class="station-chip" data-stations="30" onclick="changeStations(30)">30 ข้อ</button>
+                <button class="station-chip" data-stations="50" onclick="changeStations(50)">50 ข้อ</button>
+                <div class="custom-station-wrap">
+                    <span style="font-size:0.88rem;font-weight:700;color:#854d0e;">สไลเดอร์:</span>
+                    <input type="range" id="station-slider" min="5" max="50" step="5" value="10" oninput="onStationSlider(this.value)">
+                    <span id="slider-val" style="font-weight:800;color:#ca8a04;min-width:28px;">10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <span>ข้อที่: <strong id="current-q">1</strong> / <span id="total-q">10</span></span>
+        </div>
+        <div class="status-item">
+            <span>คะแนน: <strong id="score">0</strong></span>
+        </div>
+        <div class="status-item">
+            <span>สตรีค: <strong id="streak" style="color: #ea580c;">0 🔥</strong></span>
+        </div>
+    </div>
+
+    <main class="munch-stage-wrapper">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+        </div>
+
+        <div class="picnic-banner">
+            <div class="picnic-eq" id="equation-text">2 + 1 = ?</div>
+            <div class="picnic-badge">ลากขนมไปป้อนปากโบโบ้</div>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="munch-canvas" width="800" height="500"></canvas>
+            <div class="hint-bar">🍓 ลากขนมคำตอบเข้าปากโบโบ้ หรือแตะเพื่อป้อนได้เลย</div>
+        </div>
+    </main>
+
+    <!-- Modal จบเกม -->
+    <div id="victory-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-trophy">🏆</div>
+            <h2 class="modal-title">โบโบ้อิ่มแปล้แล้วจ้า!</h2>
+            <p class="modal-subtitle">หนูช่วยป้อนอาหารตัวเลขที่ถูกต้องให้โบโบ้ครบทุกข้อ เก่งมากๆ เลยครับ!</p>
+            <div class="modal-stars">⭐⭐⭐</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #854d0e; margin: 12px 0;">
+                คะแนนรวม: <span id="final-score">0</span> คะแนน
+            </div>
+            <div style="display:flex;gap:12px;width:100%;margin-top:15px;flex-wrap:wrap;">
+                <button id="btn-next-level" class="btn-play-again" style="background:#ca8a04;flex:1;min-width:180px;">🌟 เล่นด่านต่อไป</button>
+                <button id="btn-play-again" class="btn-play-again" style="background:#0d9488;flex:1;min-width:180px;">🔄 เริ่มเล่นใหม่</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../sounds.js"></script>
+    <script>
+        // ==========================================
+        // ระบบ Monster Munch 2D Canvas Procedural Engine
+        // ==========================================
+        const canvas = document.getElementById('munch-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let currentProblem = null;
+        let canAnswer = true;
+        let currentDifficulty = 'easy';
+        let totalStations = 10;
+        let currentQ = 0, score = 0, streak = 0;
+
+        const eqText = document.getElementById('equation-text');
+        const qEl = document.getElementById('current-q');
+        const totalQEl = document.getElementById('total-q');
+        const scoreEl = document.getElementById('score');
+        const streakEl = document.getElementById('streak');
+        const progressBarFill = document.getElementById('progress-bar-fill');
+        const victoryModal = document.getElementById('victory-modal');
+
+        // สถานะของตัวละครโบโบ้ (Bobo the Creature)
+        const bobo = {
+            x: 400,
+            y: 260,
+            radius: 110,
+            eyeDistance: 52,
+            eyeYOffset: -28,
+            pupilX: 0,
+            pupilY: 0,
+            blink: 0,           // 0 = ลืมตา, 1 = หลับตา
+            blinkTimer: 180,
+            mouthOpen: 0.15,     // 0 = ปิด, 1 = อ้ากว้าง
+            mouthTarget: 0.15,
+            chewing: 0,
+            chewTimer: 0,
+            wobbleAngle: 0,
+            breathing: 0
+        };
+
+        // อาหารและขนมเวกเตอร์ (Vector Foods)
+        let foodItems = [];
+        let draggingFood = null;
+        let dragOffset = { x: 0, y: 0 };
+        let mousePos = { x: 400, y: 260 };
+        let crumbs = [];
+
+        // WebSocket จอยมือถือ
+        let ws = null;
+        try {
+            ws = new WebSocket(`ws://${location.host || 'localhost:3001'}`);
+            ws.onopen = () => ws.send(JSON.stringify({ type: 'REGISTER', role: 'host' }));
+            ws.onmessage = (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'TAP_CARD' && canAnswer) {
+                        feedFoodByIndex(data.index);
+                    }
+                } catch(err){}
+            };
+        } catch(e){}
+
+        // วาดฉากหลังทุ่งหญ้าปิกนิก (Enchanted Meadow)
+        function drawBackground() {
+            // ท้องฟ้าสีนวล
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, 300);
+            skyGrad.addColorStop(0, '#bae6fd');
+            skyGrad.addColorStop(1, '#fef08a');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, 800, 500);
+
+            // ภูเขาเนินหญ้าไกลๆ
+            ctx.fillStyle = '#86efac';
+            ctx.beginPath();
+            ctx.arc(150, 480, 300, Math.PI, 0, false);
+            ctx.fill();
+
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(650, 480, 320, Math.PI, 0, false);
+            ctx.fill();
+
+            // เนินหญ้าหลัก
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.moveTo(0, 350);
+            ctx.quadraticCurveTo(400, 320, 800, 350);
+            ctx.lineTo(800, 500);
+            ctx.lineTo(0, 500);
+            ctx.fill();
+
+            // ผ้าปูโต๊ะปิกนิกทรงกลม
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(400, 420, 360, 65, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fecdd3';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        // วาดตัวละครโบโบ้ (Bobo)
+        function drawBobo(time) {
+            bobo.breathing = Math.sin(time * 0.05) * 4;
+
+            // ตรวจสอบการกะพริบตา
+            bobo.blinkTimer--;
+            if (bobo.blinkTimer <= 0) {
+                bobo.blink = 1;
+                if (bobo.blinkTimer < -8) {
+                    bobo.blink = 0;
+                    bobo.blinkTimer = 160 + Math.random() * 120;
+                }
+            }
+
+            // คำนวณองศาลูกตาดำมองตามเมาส์/อาหาร
+            const targetX = draggingFood ? draggingFood.x : mousePos.x;
+            const targetY = draggingFood ? draggingFood.y : mousePos.y;
+            const dx = targetX - bobo.x;
+            const dy = targetY - (bobo.y + bobo.eyeYOffset);
+            const dist = Math.hypot(dx, dy) || 1;
+            const maxPupilOffset = 11;
+            bobo.pupilX += ((dx / dist) * maxPupilOffset - bobo.pupilX) * 0.2;
+            bobo.pupilY += ((dy / dist) * maxPupilOffset - bobo.pupilY) * 0.2;
+
+            // แอนิเมชันเคี้ยวอาหาร
+            if (bobo.chewTimer > 0) {
+                bobo.chewTimer--;
+                bobo.mouthOpen = 0.25 + Math.abs(Math.sin(time * 0.4)) * 0.55;
+            } else {
+                bobo.mouthOpen += (bobo.mouthTarget - bobo.mouthOpen) * 0.2;
+            }
+
+            ctx.save();
+            ctx.translate(bobo.x, bobo.y + bobo.breathing);
+            ctx.rotate(bobo.wobbleAngle);
+
+            // เงาใต้ตัวโบโบ้
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+            ctx.beginPath();
+            ctx.ellipse(0, 105, 120, 24, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // เสาอากาศหูมีลูกบอลเรืองแสง
+            [-1, 1].forEach(side => {
+                ctx.strokeStyle = '#0d9488';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(side * 42, -90);
+                const tipX = side * 70 + Math.sin(time * 0.08 + side) * 8;
+                const tipY = -135 + Math.cos(time * 0.08) * 4;
+                ctx.quadraticCurveTo(side * 55, -120, tipX, tipY);
+                ctx.stroke();
+
+                // ปลายเสาบอลกลมสีชมพู
+                ctx.fillStyle = '#f472b6';
+                ctx.beginPath();
+                ctx.arc(tipX, tipY, 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(tipX - 3, tipY - 4, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // ลำตัวทรงกลมนุ่มฟูสีมิ้นต์ (Mint Fluffy Body)
+            const bodyGrad = ctx.createRadialGradient(-30, -30, 20, 0, 0, bobo.radius);
+            bodyGrad.addColorStop(0, '#5eead4');
+            bodyGrad.addColorStop(0.7, '#14b8a6');
+            bodyGrad.addColorStop(1, '#0f766e');
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, bobo.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // แก้มสีชมพูน่ารัก
+            ctx.fillStyle = 'rgba(244, 114, 182, 0.55)';
+            ctx.beginPath();
+            ctx.ellipse(-64, 18, 18, 12, 0, 0, Math.PI * 2);
+            ctx.ellipse(64, 18, 18, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ดวงตากลมโต 2 ข้าง
+            [-1, 1].forEach(side => {
+                const eyeX = side * bobo.eyeDistance;
+                const eyeY = bobo.eyeYOffset;
+                const eyeRadius = 26;
+
+                // ตาขาว
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(eyeX, eyeY, eyeRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#0f766e';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                if (bobo.blink === 0) {
+                    // ม่านตาสีฟ้าคราม
+                    ctx.fillStyle = '#0284c7';
+                    ctx.beginPath();
+                    ctx.arc(eyeX + bobo.pupilX, eyeY + bobo.pupilY, 14, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // รูม่านตาสีดำ
+                    ctx.fillStyle = '#0f172a';
+                    ctx.beginPath();
+                    ctx.arc(eyeX + bobo.pupilX, eyeY + bobo.pupilY, 8, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // จุดประกายตาวิบวับ 2 จุด
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(eyeX + bobo.pupilX - 4, eyeY + bobo.pupilY - 4, 4.5, 0, Math.PI * 2);
+                    ctx.arc(eyeX + bobo.pupilX + 4, eyeY + bobo.pupilY + 3, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // ตาหลับ (เส้นโค้งมีความสุข)
+                    ctx.strokeStyle = '#0f766e';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.arc(eyeX, eyeY + 2, 14, 0, Math.PI, false);
+                    ctx.stroke();
+                }
+            });
+
+            // ปากอ้าเคี้ยวอาหาร
+            const mouthH = 8 + bobo.mouthOpen * 42;
+            const mouthW = 28 + bobo.mouthOpen * 20;
+            ctx.fillStyle = '#881337';
+            ctx.beginPath();
+            ctx.ellipse(0, 38, mouthW, mouthH, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f766e';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // ลิ้นสีชมพูในปาก
+            if (bobo.mouthOpen > 0.3) {
+                ctx.fillStyle = '#fb7185';
+                ctx.beginPath();
+                ctx.arc(0, 38 + mouthH * 0.4, mouthW * 0.6, 0, Math.PI);
+                ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // วาดอาหารเวกเตอร์ความละเอียดสูง (ผลไม้และขนมหวาน ไร้ไอคอน)
+        function drawFood(item) {
+            ctx.save();
+            ctx.translate(item.x, item.y);
+            ctx.scale(item.scale, item.scale);
+
+            // เงาของอาหาร
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.ellipse(0, 42, 34, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (item.type === 'strawberry') {
+                // สตรอว์เบอร์รีสีแดงฉ่ำเงา
+                const grad = ctx.createRadialGradient(-10, -10, 5, 0, 5, 40);
+                grad.addColorStop(0, '#f87171');
+                grad.addColorStop(0.6, '#dc2626');
+                grad.addColorStop(1, '#991b1b');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.moveTo(0, 36);
+                ctx.bezierCurveTo(-45, 10, -35, -30, 0, -22);
+                ctx.bezierCurveTo(35, -30, 45, 10, 0, 36);
+                ctx.fill();
+
+                // ไฮไลต์แสงโค้ง
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(-14, 0, 16, Math.PI * 0.8, Math.PI * 1.4);
+                ctx.stroke();
+
+                // ขั้วใบไม้เขียว
+                ctx.fillStyle = '#22c55e';
+                [-14, 0, 14].forEach(off => {
+                    ctx.beginPath();
+                    ctx.ellipse(off, -26, 9, 5, (off / 20) * 0.5, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            } else if (item.type === 'apple') {
+                // แอปเปิ้ลเขียวสดใส
+                const grad = ctx.createRadialGradient(-10, -10, 5, 0, 0, 38);
+                grad.addColorStop(0, '#bef264');
+                grad.addColorStop(0.7, '#65a30d');
+                grad.addColorStop(1, '#3f6212');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(-16, 0, 24, 0, Math.PI * 2);
+                ctx.arc(16, 0, 24, 0, Math.PI * 2);
+                ctx.fill();
+
+                // ก้านและใบ
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, -20);
+                ctx.quadraticCurveTo(6, -34, 10, -38);
+                ctx.stroke();
+
+                ctx.fillStyle = '#16a34a';
+                ctx.beginPath();
+                ctx.ellipse(14, -30, 10, 5, 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                // โดนัทไอซิ่งชมพูโรยเกล็ดน้ำตาล
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.arc(0, 0, 36, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#f472b6';
+                ctx.beginPath();
+                ctx.arc(0, -2, 33, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(0, 0, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // เกล็ดน้ำตาลหลากสี
+                const sprinkleColors = ['#60a5fa', '#facc15', '#ffffff', '#4ade80'];
+                for(let s = 0; s < 7; s++) {
+                    ctx.fillStyle = sprinkleColors[s % sprinkleColors.length];
+                    const angle = s * 0.9;
+                    ctx.fillRect(Math.cos(angle) * 22, Math.sin(angle) * 20, 5, 3);
+                }
+            }
+
+            // ป้ายตัวเลขคำตอบทรงกลมสีขาวขอบเงาสวยงาม
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // ตัวเลข
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '900 24px "Chakra Petch", "Sarabun", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(String(item.val), 0, 2);
+
+            ctx.restore();
+        }
+
+        // อนุภาคเศษขนมแตกกระจาย (Food Crumbs)
+        function spawnCrumbs(x, y, color) {
+            for (let i = 0; i < 24; i++) {
+                crumbs.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: -4 - Math.random() * 6,
+                    color: color || '#f472b6',
+                    radius: 3 + Math.random() * 4,
+                    life: 1
+                });
+            }
+        }
+
+        function updateCrumbs() {
+            for (let i = crumbs.length - 1; i >= 0; i--) {
+                const c = crumbs[i];
+                c.x += c.vx;
+                c.y += c.vy;
+                c.vy += 0.35; // gravity
+                c.life -= 0.03;
+                if (c.life <= 0) {
+                    crumbs.splice(i, 1);
+                } else {
+                    ctx.fillStyle = c.color;
+                    ctx.globalAlpha = c.life;
+                    ctx.beginPath();
+                    ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+        }
+
+        // สร้างโจทย์คณิตศาสตร์
+        function generateProblem() {
+            let maxVal = 5;
+            if (currentDifficulty === 'medium') maxVal = 10;
+            else if (currentDifficulty === 'hard') maxVal = 20;
+
+            const a = 1 + Math.floor(Math.random() * (maxVal - 1));
+            const b = 1 + Math.floor(Math.random() * (maxVal - a));
+            const ans = a + b;
+
+            let choicesCount = 3;
+            if (currentDifficulty === 'hard') choicesCount = 4;
+
+            const choices = [ans];
+            while (choices.length < choicesCount) {
+                const delta = (Math.random() > 0.5 ? 1 : -1) * (1 + Math.floor(Math.random() * 3));
+                const wrong = Math.max(1, ans + delta);
+                if (!choices.includes(wrong)) choices.push(wrong);
+            }
+            choices.sort(() => 0.5 - Math.random());
+
+            return { a, b, ans, choices };
+        }
+
+        function loadQuestion() {
+            canAnswer = true;
+            qEl.textContent = currentQ + 1;
+            updateProgressBar();
+
+            currentProblem = generateProblem();
+            eqText.textContent = `${currentProblem.a} + ${currentProblem.b} = ?`;
+
+            const foodTypes = ['strawberry', 'apple', 'donut'];
+            const count = currentProblem.choices.length;
+            const spacing = count === 4 ? 140 : 180;
+            const startX = 400 - ((count - 1) * spacing) / 2;
+
+            foodItems = currentProblem.choices.map((val, idx) => ({
+                index: idx,
+                val: val,
+                type: foodTypes[idx % foodTypes.length],
+                origX: startX + idx * spacing,
+                origY: 420,
+                x: startX + idx * spacing,
+                y: 420,
+                radius: 36,
+                scale: 1
+            }));
+
+            soundManager.speakThai(`ป้อนอาหารให้โบโบ้หน่อยจ้า ${currentProblem.a} บวก ${currentProblem.b} ได้เท่าไหร่เอ่ย?`);
+            syncPhone(currentProblem.choices);
+        }
+
+        function feedFoodByIndex(idx) {
+            if (!canAnswer || idx >= foodItems.length) return;
+            const item = foodItems[idx];
+            // แอนิเมชันลอยเข้าปากโบโบ้ทันที
+            animateFlyToMouth(item);
+        }
+
+        function animateFlyToMouth(item) {
+            canAnswer = false;
+            let step = 0;
+            const startX = item.x;
+            const startY = item.y;
+
+            const animInterval = setInterval(() => {
+                step += 0.08;
+                item.x = startX + (bobo.x - startX) * step;
+                item.y = startY + ((bobo.y + 38) - startY) * step;
+                item.scale = 1 - step * 0.4;
+                bobo.mouthTarget = 0.9;
+
+                if (step >= 1) {
+                    clearInterval(animInterval);
+                    checkFoodAnswer(item);
+                }
+            }, 16);
+        }
+
+        function checkFoodAnswer(item) {
+            const isCorrect = (item.val === currentProblem.ans);
+
+            if (isCorrect) {
+                bobo.chewTimer = 45;
+                streak++;
+                score += (10 + (streak > 1 ? streak * 2 : 0));
+                scoreEl.textContent = score;
+                streakEl.textContent = `${streak} 🔥`;
+
+                soundManager.playMatch();
+                soundManager.speakThai(`ง่ำๆๆ อร่อยจังเลย! ${currentProblem.a} บวก ${currentProblem.b} เท่ากับ ${item.val} ถูกต้องแล้วจ้า!`);
+                spawnCrumbs(bobo.x, bobo.y + 38, item.type === 'strawberry' ? '#ef4444' : '#84cc16');
+
+                // ซ่อนอาหารที่กินไปแล้ว
+                foodItems = foodItems.filter(f => f !== item);
+
+                setTimeout(() => {
+                    currentQ++;
+                    if (currentQ < totalStations) {
+                        loadQuestion();
+                    } else {
+                        finishGame();
+                    }
+                }, 1600);
+            } else {
+                streak = 0;
+                streakEl.textContent = `0 🔥`;
+                soundManager.playMismatch();
+                soundManager.speakThai(`อุ๊ย! โบโบ้ยังไม่อยากกินอันนี้นะจ๊ะ ลองหาอันอื่นดูนะ`);
+
+                // โบโบ้ส่ายหน้าและคายอาหารกลับที่เดิม
+                bobo.wobbleAngle = 0.2;
+                setTimeout(() => bobo.wobbleAngle = -0.2, 100);
+                setTimeout(() => bobo.wobbleAngle = 0, 200);
+
+                item.x = item.origX;
+                item.y = item.origY;
+                item.scale = 1;
+                bobo.mouthTarget = 0.15;
+                canAnswer = true;
+            }
+        }
+
+        function finishGame() {
+            soundManager.playWin();
+            document.getElementById('final-score').textContent = score;
+            victoryModal.classList.add('active');
+            updateProgressBar();
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'GAME_WON' }));
+            }
+        }
+
+        function updateProgressBar() {
+            if (!progressBarFill) return;
+            const pct = Math.min(100, Math.round((currentQ / totalStations) * 100));
+            progressBarFill.style.width = `${pct}%`;
+        }
+
+        // ตรวจสอบการลากอาหารด้วยเมาส์หรือทัชสกรีน
+        function setupInput() {
+            function getCanvasPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * scaleX,
+                    y: (clientY - rect.top) * scaleY
+                };
+            }
+
+            function onPointerDown(e) {
+                if (!canAnswer) return;
+                const pos = getCanvasPos(e);
+                mousePos = pos;
+
+                for (const item of foodItems) {
+                    const dist = Math.hypot(pos.x - item.x, pos.y - item.y);
+                    if (dist < item.radius + 10) {
+                        draggingFood = item;
+                        dragOffset = { x: item.x - pos.x, y: item.y - pos.y };
+                        item.scale = 1.15;
+                        soundManager.playClick();
+                        break;
+                    }
+                }
+            }
+
+            function onPointerMove(e) {
+                const pos = getCanvasPos(e);
+                mousePos = pos;
+
+                if (draggingFood) {
+                    draggingFood.x = pos.x + dragOffset.x;
+                    draggingFood.y = pos.y + dragOffset.y;
+
+                    // ตรวจว่าอยู่ใกล้ปากโบโบ้หรือไม่
+                    const distToMouth = Math.hypot(draggingFood.x - bobo.x, draggingFood.y - (bobo.y + 38));
+                    if (distToMouth < 90) {
+                        bobo.mouthTarget = 0.85; // อ้าปากรอ
+                    } else {
+                        bobo.mouthTarget = 0.2;
+                    }
+                }
+            }
+
+            function onPointerUp() {
+                if (draggingFood) {
+                    const distToMouth = Math.hypot(draggingFood.x - bobo.x, draggingFood.y - (bobo.y + 38));
+                    if (distToMouth < 90 && canAnswer) {
+                        // ป้อนอาหารเข้าปากสำเร็จ
+                        checkFoodAnswer(draggingFood);
+                    } else {
+                        // กลับคืนที่เดิม
+                        draggingFood.x = draggingFood.origX;
+                        draggingFood.y = draggingFood.origY;
+                        draggingFood.scale = 1;
+                        bobo.mouthTarget = 0.15;
+                    }
+                    draggingFood = null;
+                }
+            }
+
+            canvas.addEventListener('mousedown', onPointerDown);
+            window.addEventListener('mousemove', onPointerMove);
+            window.addEventListener('mouseup', onPointerUp);
+
+            canvas.addEventListener('touchstart', onPointerDown, { passive: true });
+            window.addEventListener('touchmove', onPointerMove, { passive: true });
+            window.addEventListener('touchend', onPointerUp);
+        }
+
+        // เชื่อมต่อจอยมือถือ
+        function syncPhone(choices) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'SYNC_STATE',
+                    pairs: choices.length,
+                    matchedPairs: currentQ,
+                    cards: choices.map((val, i) => ({
+                        index: i,
+                        emoji: '🍓',
+                        name: `${val}`
+                    }))
+                }));
+            }
+        }
+
+        // ฟังก์ชันปรับความยากและสถานี
+        function changeDifficulty(level) {
+            currentDifficulty = level;
+            document.querySelectorAll('.level-chip').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.level === level);
+            });
+            initSession(true);
+        }
+
+        function changeStations(num) {
+            totalStations = parseInt(num, 10);
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === totalStations);
+            });
+            const slider = document.getElementById('station-slider');
+            const sliderVal = document.getElementById('slider-val');
+            if (slider) slider.value = totalStations;
+            if (sliderVal) sliderVal.textContent = totalStations;
+            initSession(true);
+        }
+
+        function onStationSlider(val) {
+            const num = parseInt(val, 10);
+            const sliderVal = document.getElementById('slider-val');
+            if (sliderVal) sliderVal.textContent = num;
+            totalStations = num;
+            document.querySelectorAll('.station-chip').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.stations, 10) === num);
+            });
+            initSession(true);
+        }
+
+        function initSession(resetScore = true) {
+            currentQ = 0;
+            if (resetScore) {
+                score = 0;
+                streak = 0;
+                scoreEl.textContent = '0';
+                streakEl.textContent = '0 🔥';
+            }
+            if (totalQEl) totalQEl.textContent = totalStations;
+            loadQuestion();
+        }
+
+        // Animation Loop 2D Canvas
+        let animTime = 0;
+        function renderLoop() {
+            animTime++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBackground();
+            drawBobo(animTime);
+
+            foodItems.forEach(item => drawFood(item));
+            updateCrumbs();
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        document.getElementById('btn-restart').onclick = () => initSession(true);
+        document.getElementById('btn-play-again').onclick = () => { victoryModal.classList.remove('active'); initSession(true); };
+        document.getElementById('btn-next-level').onclick = () => { victoryModal.classList.remove('active'); initSession(false); };
+        document.body.onclick = () => soundManager.init();
+
+        setupInput();
+        initSession(true);
+        requestAnimationFrame(renderLoop);
+    </script>
+</body>
+</html>

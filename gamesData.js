@@ -1,4 +1,4 @@
-// ข้อมูล 31 เกมเสริมพัฒนาการสำหรับเด็กปฐมวัย (อายุไม่เกิน 6 ขวบ)
+// ข้อมูล 33 เกมเสริมพัฒนาการสำหรับเด็กปฐมวัย (อายุไม่เกิน 6 ขวบ)
 const GAMES_DATA = [
     // 📖 หมวดที่ 1: ภาษาไทย นิทาน และการอ่าน (Thai & Stories)
     {
@@ -168,6 +168,30 @@ const GAMES_DATA = [
         age: "3-6 ขวบ",
         desc: "เกมกล้อง AR บวกเลขขยับตัวป๊อปฟองสบู่ พร้อมระบบตรวจจับความเคลื่อนไหว",
         path: "games/ar-math/index.html"
+    },
+    {
+        id: "jelly-math-3d",
+        title: "Jelly Math 3D แดนเยลลี่",
+        category: "math",
+        categoryName: "➕ บวกเลข & คณิต",
+        emoji: "🧊",
+        icon: "🧊",
+        color: "#0284c7",
+        age: "3-6 ขวบ",
+        desc: "แดนเยลลี่บวกเลข 3 มิติ หมุนได้รอบทิศ ลูกกวาดแก้วเด้งดึ๋ง ภาพสวยสไตล์ Nintendo",
+        path: "games/jelly-math-3d/index.html"
+    },
+    {
+        id: "monster-munch",
+        title: "Monster Munch โบโบ้ป้อนเลข",
+        category: "math",
+        categoryName: "➕ บวกเลข & คณิต",
+        emoji: "👾",
+        icon: "🍓",
+        color: "#ca8a04",
+        age: "3-6 ขวบ",
+        desc: "ป้อนผลไม้และขนมหวานให้โบโบ้ สัตว์ประหลาดน้อย 2D แอนิเมชันตาดุ๊กดิ๊ก ไร้ไอคอน",
+        path: "games/monster-munch/index.html"
     },
 
     // 🧠 หมวดที่ 3: ความจำและการสังเกต (Memory & Observation)

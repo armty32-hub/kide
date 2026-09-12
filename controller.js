@@ -60,7 +60,7 @@ class UniversalGameController {
 
     showHubView() {
         this.activeGame = 'hub';
-        this.activeGameName.textContent = 'สวนสนุก 31 เกม';
+        this.activeGameName.textContent = 'สวนสนุก 33 เกม';
         this.viewHub.classList.add('active');
         this.viewGameplay.classList.remove('active');
     }
